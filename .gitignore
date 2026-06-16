@@ -1,0 +1,37 @@
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+
+# Datasets
+data/cifar-10-batches-py/
+data/cifar-100-python/
+data/*.tar.gz
+data/*.zip
+Benthic/
+Plankton/
+Treeversity/
+Treeversity#6/
+CUB_200_2011/
+cub200/
+
+# Training outputs and caches
+out_ultimate/
+outputs/
+results/
+logs/
+wandb/
+checkpoints/
+*.log
+*.pt
+*.pth
+*.ckpt
+*.npz
+*.npy
+*.pkl
+
+# OS/editor
+.DS_Store
+Thumbs.db
+*.tmp
+*.bak
