@@ -7,7 +7,6 @@ import time
 import warnings
 
 from torch.cuda.amp import GradScaler
-import faiss
 warnings.filterwarnings('ignore')
 
 from utils.AverageMeter import *
@@ -16,6 +15,27 @@ from utils.utils_mixup import *
 from utils.losses import *
 
 import wandb
+
+
+def _inner_product_knn(features, k, chunk_size=1024):
+    feature_tensor = features.detach().float()
+    if feature_tensor.dim() != 2:
+        raise ValueError(f'Expected 2-D feature tensor, got shape {tuple(feature_tensor.shape)}')
+
+    num_samples = feature_tensor.size(0)
+    k = min(int(k), num_samples)
+    values, indices = [], []
+    feature_bank = feature_tensor.t().contiguous()
+
+    with torch.no_grad():
+        for start in range(0, num_samples, chunk_size):
+            end = min(start + chunk_size, num_samples)
+            sim = feature_tensor[start:end].matmul(feature_bank)
+            top_values, top_indices = torch.topk(sim, k=k, dim=1, largest=True, sorted=True)
+            values.append(top_values.cpu())
+            indices.append(top_indices.cpu())
+
+    return torch.cat(values, dim=0), torch.cat(indices, dim=0)
 
 
 def train_algo(args, scheduler, model,  device, 
@@ -78,19 +98,16 @@ def train_algo(args, scheduler, model,  device,
 
 
 def reliable_pseudolabel_selection(args, device, trainloader, features, epoch, model_preds=None):
-    
-    features_numpy = features.cpu().numpy() 
-    index = faiss.IndexFlatIP(features_numpy.shape[1])
-    index.add(features_numpy)
+
     partial_labels = torch.Tensor(np.copy(trainloader.dataset.soft_labels))
     labels = torch.Tensor(np.copy(trainloader.dataset.soft_labels))
     clean_labels = torch.LongTensor(trainloader.dataset.clean_labels)
     soft_labels = torch.Tensor(np.copy(trainloader.dataset.soft_labels))
 
-    D,I = index.search(features_numpy, args.k_val+1)
-    neighbors = torch.LongTensor(I)
-    weights = torch.exp(torch.Tensor(D[:,0:])/0.1)
-    N = features_numpy.shape[0]
+    D, I = _inner_product_knn(features, args.k_val + 1)
+    neighbors = I.long()
+    weights = torch.exp(D[:,0:]/0.1)
+    N = features.shape[0]
 
     if epoch > args.start_correct:
         prob, pred = torch.max(model_preds,1)
@@ -247,31 +264,17 @@ def reliable_pseudolabel_selection(args, device, trainloader, features, epoch, m
 
     return selected_examples, selected_labels
 
-
-import torch
-import numpy as np
-import faiss
-import wandb
-
-import torch
-import numpy as np
-import faiss
-import wandb
-
 def reliable_pseudolabel_selection_KNN_pseudolabel(args, device, trainloader, features, epoch, model_preds=None):
-    
-    features_numpy = features.cpu().numpy() 
-    index = faiss.IndexFlatIP(features_numpy.shape[1])
-    index.add(features_numpy)
+
     partial_labels = torch.Tensor(np.copy(trainloader.dataset.soft_labels))
     labels = torch.Tensor(np.copy(trainloader.dataset.soft_labels))
     clean_labels = torch.LongTensor(trainloader.dataset.clean_labels)
     soft_labels = torch.Tensor(np.copy(trainloader.dataset.soft_labels))
 
-    D, I = index.search(features_numpy, args.k_val + 1)
-    neighbors = torch.LongTensor(I)
-    weights = torch.exp(torch.Tensor(D[:, 0:]) / 0.1)
-    N = features_numpy.shape[0]
+    D, I = _inner_product_knn(features, args.k_val + 1)
+    neighbors = I.long()
+    weights = torch.exp(D[:, 0:] / 0.1)
+    N = features.shape[0]
 
     if epoch > args.start_correct:
         prob, pred = torch.max(model_preds, 1)
@@ -385,10 +388,7 @@ def reliable_pseudolabel_selection_KNN_pseudolabel(args, device, trainloader, fe
 
 
 def reliable_pseudolabel_selection_weighted(args, device, trainloader, features, epoch, model_preds=None):
-    
-    features_numpy = features.cpu().numpy() 
-    index = faiss.IndexFlatIP(features_numpy.shape[1])
-    index.add(features_numpy)
+
     partial_labels = torch.Tensor(np.copy(trainloader.dataset.soft_labels))
     labels = torch.Tensor(np.copy(trainloader.dataset.soft_labels))
     clean_labels = torch.LongTensor(trainloader.dataset.clean_labels)
@@ -396,10 +396,10 @@ def reliable_pseudolabel_selection_weighted(args, device, trainloader, features,
     prior = torch.Tensor(np.copy(trainloader.dataset.weights))
 
 
-    D,I = index.search(features_numpy, args.k_val+1)
-    neighbors = torch.LongTensor(I)
-    weights = torch.exp(torch.Tensor(D[:,0:])/0.1)
-    N = features_numpy.shape[0]
+    D, I = _inner_product_knn(features, args.k_val + 1)
+    neighbors = I.long()
+    weights = torch.exp(D[:,0:]/0.1)
+    N = features.shape[0]
 
     if epoch > args.start_correct:
         prob, pred = torch.max(model_preds,1)

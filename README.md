@@ -1,37 +1,48 @@
 # SRSE
 
-Source-Restored Supervision Extraction (SRSE) for noisy partial-label learning.
-This repository contains the clean reproduction code, dataset download notes,
-environment specification, and launcher commands used for the current SRSE
-manuscript experiments.
+[中文说明](README_CN.md)
 
-The release intentionally does not include datasets, generated caches, raw
-training logs, checkpoints, or machine-local launch wrappers.
+Source-Restored Supervision Extraction (SRSE) is a reproducibility package for noisy partial-label learning experiments. The repository contains the public code snapshot, dataset placement notes, environment specifications, and command launcher used for the current SRSE manuscript experiments.
+
+This release is intentionally code-focused. It excludes datasets, generated feature caches, raw training logs, checkpoints, and machine-local launch wrappers.
+
+## What Is Included
+
+```text
+data/                         Dataset loader source and download notes.
+utils/                        Shared models, losses, schedulers, and topology utilities.
+reproducibility/
+  code/main/main.py           Main SRSE training entry point.
+  code/component_ablation/    Component and Topology-DAES ablation entry points.
+  code/persistent_state/      Persistent supervision-state proxy experiments.
+  code/baselines/             Baseline-control utilities retained for comparison.
+  commands/                   Unified paper-experiment launcher.
+```
+
+The current public snapshot removes the runtime dependency on `faiss-cpu`. KNN-based supervision selection uses a PyTorch inner-product `topk` fallback, which keeps the environment easier to reproduce while preserving the same neighborhood-selection contract.
 
 ## Environment
 
-Recommended Linux environment:
+Recommended Linux setup:
 
 ```bash
 conda create -n srse python=3.10 -y
 conda activate srse
 
-# Pick the CUDA build that matches your driver. CUDA 12.1 is a safe default on
-# recent NVIDIA systems; CPU-only runs are possible but too slow for full tables.
+# Pick the CUDA build that matches your driver. CUDA 12.1 is a practical default
+# for recent NVIDIA systems; CPU-only runs are possible but too slow for full tables.
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
 pip install -r requirements.txt
 ```
 
-An equivalent Conda environment is provided in `environment.yml`:
+An equivalent Conda environment is provided:
 
 ```bash
 conda env create -f environment.yml
 conda activate srse
 ```
 
-Full 500-epoch CIFAR runs were produced on NVIDIA GPUs. Small numerical
-differences can occur across GPU models, PyTorch/CUDA versions, and cuDNN
-determinism settings.
+Full 500-epoch CIFAR runs were produced on NVIDIA GPUs. Small numerical differences can occur across GPU models, PyTorch/CUDA versions, and cuDNN determinism settings.
 
 ## Datasets
 
@@ -40,7 +51,7 @@ Dataset binaries are excluded. Download and place them according to:
 - `data/read.md`
 - `reproducibility/DATASETS_README.md`
 
-Main URLs:
+Main sources:
 
 - CIFAR-10/100 official page: https://www.cs.toronto.edu/~kriz/cifar.html
 - CIFAR-10 Python archive: https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz
@@ -67,26 +78,20 @@ Treeversity#6/
   fold1/ ... fold5/
 ```
 
-`CIFAR100H` is generated from the CIFAR-100 hierarchy and does not require a
-separate image archive.
+`CIFAR100H` is generated from the CIFAR-100 hierarchy and does not require a separate image archive.
 
 ## Pretrained Weights
 
-CIFAR experiments use ResNet-18 from scratch. Crowdsourced datasets and optional
-CUB runs use TorchVision ImageNet-1K pretrained backbones:
+CIFAR experiments use ResNet-18 from scratch. Crowdsourced datasets and optional CUB runs use TorchVision ImageNet-1K pretrained backbones:
 
-- ResNet-18 `IMAGENET1K_V1`:
-  https://download.pytorch.org/models/resnet18-f37072fd.pth
-- ResNet-50 `IMAGENET1K_V1`:
-  https://download.pytorch.org/models/resnet50-0676ba61.pth
+- ResNet-18 `IMAGENET1K_V1`: https://download.pytorch.org/models/resnet18-f37072fd.pth
+- ResNet-50 `IMAGENET1K_V1`: https://download.pytorch.org/models/resnet50-0676ba61.pth
 
-TorchVision downloads these automatically into the default torch hub cache
-(`~/.cache/torch/hub/checkpoints`). For offline runs, download the files above
-into that cache directory before launching training.
+TorchVision downloads these files automatically into the default torch hub cache (`~/.cache/torch/hub/checkpoints`). For offline runs, download the files above into that cache directory before launching training.
 
 ## Reproduction Commands
 
-Use the unified launcher:
+Use the unified launcher from the repository root:
 
 ```bash
 export PROJECT_ROOT=$PWD
@@ -121,22 +126,21 @@ bash reproducibility/commands/reproduce_srse_paper_experiments_20260616.sh no_re
 bash reproducibility/commands/reproduce_srse_paper_experiments_20260616.sh crowd_srse_table
 ```
 
-The launcher prints each full Python command before execution and stores outputs
-under `OUT`.
+The launcher prints each full Python command before execution and stores outputs under `OUT`.
 
-## Expected Scale of Results
+## Expected Result Scale
 
-With the same seeds and hyperparameters, the main CIFAR-100 setting
-`q=0.05, eta=0.3` should reproduce the manuscript result around the high-79%
-final-accuracy range. The `eta=0.4` Topology-DAES full row is expected around
-78% final accuracy. Treat small deviations as normal unless they exceed the
-reported seed-to-seed standard deviation materially.
+With the same seeds and hyperparameters, the main CIFAR-100 setting `q=0.05, eta=0.3` should reproduce the manuscript result around the high-79% final-accuracy range. The `eta=0.4` Topology-DAES full row is expected around 78% final accuracy. Treat small deviations as normal unless they materially exceed the reported seed-to-seed standard deviation.
 
 ## Package Hygiene
 
 The repository excludes:
 
 - Dataset archives and extracted dataset folders.
-- `out_ultimate`, checkpoints, `.pt/.pth/.ckpt`, and raw logs.
+- Generated outputs such as `out_ultimate`, checkpoints, `.pt/.pth/.ckpt`, `.npz/.npy/.pkl`, and raw logs.
 - Python bytecode and cache directories.
 - Machine-local launch wrappers with hard-coded absolute paths.
+
+## Citation
+
+The manuscript citation will be added after the paper metadata is finalized. Until then, please cite this GitHub repository and the relevant manuscript version used for comparison.
