@@ -245,6 +245,8 @@ def parse_args():
                         choices=['CIFAR10', 'CIFAR100', 'CIFAR100H', 
                                 'Treeversity', 'Benthic', 'Plankton',])
     parser.add_argument('--train_root', default='./data', help='root for train data')
+    parser.add_argument('--download', action='store_true',
+                        help='Download CIFAR data if it is missing under train_root. Disabled by default for reproducible/offline runs.')
     parser.add_argument('--out', type=str, default='./out_ultimate', help='Directory for output')
     parser.add_argument('--checkpoint_every_epoch', action='store_true',
                         help='Write epoch checkpoints plus epoch_metrics.csv/jsonl.')
@@ -1708,7 +1710,7 @@ def run_single_experiment(args):
     if args.dataset in ['CIFAR10', 'CIFAR100', 'CIFAR100H']:
         is_h = 'H' in args.dataset
         BaseClass = CIFAR100Partial if '100' in args.dataset else CIFAR10Partial
-        base_train_ds = BaseClass(args, train=True, download=True, transform=None)
+        base_train_ds = BaseClass(args, train=True, download=args.download, transform=None)
 
         # 初始化修改掩码
         if not hasattr(base_train_ds, 'modified_mask'):
@@ -1722,7 +1724,7 @@ def run_single_experiment(args):
                 base_train_ds.partial_noise(args.pr, args.nr)
 
         TestClass = datasets.CIFAR100 if '100' in args.dataset else datasets.CIFAR10
-        test_ds = TestClass(root=args.train_root, train=False, download=True, transform=test_t)
+        test_ds = TestClass(root=args.train_root, train=False, download=args.download, transform=test_t)
 
     elif args.dataset in ['Treeversity', 'Benthic', 'Plankton']:
         lpi_args = argparse.Namespace(

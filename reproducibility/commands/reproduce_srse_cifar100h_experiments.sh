@@ -11,7 +11,16 @@ OUT="${OUT:-${ROOT}/out_ultimate/reproduce_srse}"
 GPU_ID="${GPU_ID:-0}"
 MAIN_SCRIPT="${MAIN_SCRIPT:-${ROOT}/reproducibility/code/main/main.py}"
 SEEDS="${SEEDS:-1 2 3}"
+EPOCHS="${EPOCHS:-500}"
+BATCH_SIZE="${BATCH_SIZE:-256}"
+NUM_WORKERS="${NUM_WORKERS:-4}"
+CIFAR_DOWNLOAD="${CIFAR_DOWNLOAD:-0}"
 read -r -a SEED_ARGS <<< "${SEEDS}"
+
+download_args=()
+case "${CIFAR_DOWNLOAD}" in
+  1|true|TRUE|yes|YES) download_args+=(--download) ;;
+esac
 
 export PYTHONPATH="${ROOT}:${PYTHONPATH:-}"
 export WANDB_MODE="${WANDB_MODE:-disabled}"
@@ -29,7 +38,8 @@ Targets:
   help            Print this help.
 
 Runtime overrides:
-  PROJECT_ROOT, PY, DATA_ROOT, OUT, GPU_ID, MAIN_SCRIPT, SEEDS.
+  PROJECT_ROOT, PY, DATA_ROOT, OUT, GPU_ID, MAIN_SCRIPT, SEEDS, EPOCHS,
+  BATCH_SIZE, NUM_WORKERS, CIFAR_DOWNLOAD.
 USAGE
 }
 
@@ -43,10 +53,12 @@ run_py() {
 
 common_cifar_args=(
   --train_root "${DATA_ROOT}"
+  "${download_args[@]}"
   --lpi 10
   --network R18
-  --epochs 500
-  --batch_size 256
+  --epochs "${EPOCHS}"
+  --batch_size "${BATCH_SIZE}"
+  --num_workers "${NUM_WORKERS}"
   --lr 0.1
   --wd 0.001
   --momentum 0.9

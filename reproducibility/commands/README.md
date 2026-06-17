@@ -31,7 +31,22 @@ The launcher supports the current paper-facing targets:
 - `all`
 
 Runtime variables such as `PROJECT_ROOT`, `PY`, `DATA_ROOT`, `CROWD_ROOT`,
-`OUT`, and `GPU_ID` can be overridden without editing Python source files.
+`OUT`, `GPU_ID`, `SEEDS`, `EPOCHS`, `BATCH_SIZE`, `NUM_WORKERS`, and
+`CIFAR_DOWNLOAD` can be overridden without editing Python source files.
+
+## Smoke Tests
+
+Use the smoke launcher for short executable checks after datasets are placed:
+
+```bash
+bash reproducibility/commands/smoke_test_srse_entrypoints.sh help
+bash reproducibility/commands/smoke_test_srse_entrypoints.sh cifar
+bash reproducibility/commands/smoke_test_srse_entrypoints.sh ablations
+```
+
+Smoke targets run one epoch by default and validate public entry points rather
+than paper-level result quality. Override `EPOCHS`, `SEED`, `CIFAR_BATCH_SIZE`,
+`CROWD_BATCH_SIZE`, `NUM_WORKERS`, and `OUT` for local validation.
 
 ## Dataset-Specific CIFAR Launchers
 
@@ -50,7 +65,9 @@ The CIFAR main-table conditions are also split into dataset-specific scripts:
 
 Each script accepts `main_table`, `all`, `help`, and per-condition targets
 such as `q005_eta03`. The scripts use the same runtime overrides as the
-unified launcher, plus `SEEDS` for changing the seed list.
+unified launcher, plus `SEEDS` for changing the seed list. CIFAR data loading is
+offline by default; set `CIFAR_DOWNLOAD=1` only when automatic TorchVision
+download is desired.
 
 ## Crowd Launcher Coverage
 

@@ -14,6 +14,14 @@ DATA_ROOT="${DATA_ROOT:-${ROOT}/data}"
 CROWD_ROOT="${CROWD_ROOT:-${ROOT}}"
 OUT="${OUT:-${ROOT}/out_ultimate/reproduce_srse}"
 GPU_ID="${GPU_ID:-0}"
+SEEDS="${SEEDS:-1 2 3}"
+TOPOLOGY_SEEDS="${TOPOLOGY_SEEDS:-1}"
+EPOCHS="${EPOCHS:-500}"
+BATCH_SIZE="${BATCH_SIZE:-256}"
+CROWD_EPOCHS="${CROWD_EPOCHS:-100}"
+CROWD_BATCH_SIZE="${CROWD_BATCH_SIZE:-32}"
+NUM_WORKERS="${NUM_WORKERS:-4}"
+CIFAR_DOWNLOAD="${CIFAR_DOWNLOAD:-0}"
 
 MAIN_SCRIPT="${MAIN_SCRIPT:-${ROOT}/reproducibility/code/main/main.py}"
 ABLATION_SCRIPT="${ABLATION_SCRIPT:-${ROOT}/reproducibility/code/component_ablation/srse_ablation.py}"
@@ -26,6 +34,14 @@ CIFAR100H_SCRIPT="${CIFAR100H_SCRIPT:-${ROOT}/reproducibility/commands/reproduce
 export PYTHONPATH="${ROOT}:${PYTHONPATH:-}"
 export WANDB_MODE="${WANDB_MODE:-disabled}"
 export WANDB_SILENT="${WANDB_SILENT:-true}"
+
+read -r -a SEED_ARGS <<< "${SEEDS}"
+read -r -a TOPOLOGY_SEED_ARGS <<< "${TOPOLOGY_SEEDS}"
+
+download_args=()
+case "${CIFAR_DOWNLOAD}" in
+  1|true|TRUE|yes|YES) download_args+=(--download) ;;
+esac
 
 usage() {
   cat <<'USAGE'
@@ -50,7 +66,8 @@ Targets:
 Runtime overrides:
   PROJECT_ROOT, PY, DATA_ROOT, CROWD_ROOT, OUT, GPU_ID, MAIN_SCRIPT,
   ABLATION_SCRIPT, PSS_SCRIPT, AGG_CROWD_SCRIPT, CIFAR10_SCRIPT,
-  CIFAR100_SCRIPT, CIFAR100H_SCRIPT, SEEDS.
+  CIFAR100_SCRIPT, CIFAR100H_SCRIPT, SEEDS, TOPOLOGY_SEEDS, EPOCHS,
+  BATCH_SIZE, CROWD_EPOCHS, CROWD_BATCH_SIZE, NUM_WORKERS, CIFAR_DOWNLOAD.
 USAGE
 }
 
@@ -96,10 +113,12 @@ run_main_c100_eta03() {
 
 common_cifar_args=(
   --train_root "${DATA_ROOT}"
+  "${download_args[@]}"
   --lpi 10
   --network R18
-  --epochs 500
-  --batch_size 256
+  --epochs "${EPOCHS}"
+  --batch_size "${BATCH_SIZE}"
+  --num_workers "${NUM_WORKERS}"
   --lr 0.1
   --wd 0.001
   --momentum 0.9
@@ -131,7 +150,7 @@ run_topology_micro_row() {
     "${common_cifar_args[@]}" \
     --pr 0.05 \
     --nr "${eta}" \
-    --seeds 1 \
+    --seeds "${TOPOLOGY_SEED_ARGS[@]}" \
     --exp_name "topology_micro_ablation/q005_eta${eta}/${row}" \
     "$@"
 }
@@ -161,7 +180,7 @@ run_component_row() {
     "${common_cifar_args[@]}" \
     --pr 0.05 \
     --nr 0.3 \
-    --seeds 1 2 3 \
+    --seeds "${SEED_ARGS[@]}" \
     --exp_name "component_table/${exp}" \
     "$@"
 }
@@ -187,9 +206,11 @@ run_pss_row() {
   run_py "${PSS_SCRIPT}" \
     --dataset CIFAR100 \
     --train_root "${DATA_ROOT}" \
+    "${download_args[@]}" \
     --network R18 \
-    --epochs 500 \
-    --batch_size 256 \
+    --epochs "${EPOCHS}" \
+    --batch_size "${BATCH_SIZE}" \
+    --num_workers "${NUM_WORKERS}" \
     --lr 0.1 \
     --wd 0.001 \
     --momentum 0.9 \
@@ -207,7 +228,7 @@ run_pss_row() {
     --max_w_model 0.5 \
     --model_warmup_epochs 20 \
     --out "${OUT}/pss_table" \
-    --seeds 1 2 3 \
+    --seeds "${SEED_ARGS[@]}" \
     --cuda_dev "${GPU_ID}" \
     --pr 0.05 \
     --nr 0.3 \
@@ -261,7 +282,7 @@ run_no_reg() {
     "${common_cifar_args[@]}" \
     --pr "${pr}" \
     --nr "${nr}" \
-    --seeds 1 2 3 \
+    --seeds "${SEED_ARGS[@]}" \
     --exp_name "no_cr_no_mixup_table/${exp}" \
     --ablate_no_cr \
     --ablate_no_reliable_mixup
@@ -309,9 +330,9 @@ run_crowd_srse() {
     --pr 0.05 \
     --nr 0.5 \
     --network R50 \
-    --epochs 100 \
-    --batch_size 32 \
-    --num_workers 4 \
+    --epochs "${CROWD_EPOCHS}" \
+    --batch_size "${CROWD_BATCH_SIZE}" \
+    --num_workers "${NUM_WORKERS}" \
     --lr 0.05 \
     --wd 0.0005 \
     --momentum 0.9 \
@@ -332,7 +353,7 @@ run_crowd_srse() {
     --daes_entropy_coeff 0.5 \
     --max_w_model 0.1 \
     --model_warmup_epochs 10 \
-    --seeds 1 2 3 \
+    --seeds "${SEED_ARGS[@]}" \
     --cuda_dev "${gpu}" \
     --out "${OUT}/crowd_srse_table" \
     --exp_name "${exp}"

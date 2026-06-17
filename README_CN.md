@@ -66,7 +66,18 @@ bash reproducibility/commands/reproduce_srse_paper_experiments.sh help
 PY=echo bash reproducibility/commands/reproduce_srse_paper_experiments.sh main_c100_eta03
 ```
 
-按照下文放置数据集后，再运行具体实验：
+按照下文放置数据集后，建议先运行一轮 1 epoch 的可执行性 smoke check：
+
+```bash
+export PROJECT_ROOT=$PWD
+export DATA_ROOT=$PWD/data
+export CROWD_ROOT=$PWD
+export GPU_ID=0
+
+bash reproducibility/commands/smoke_test_srse_entrypoints.sh cifar
+```
+
+然后再运行具体完整实验：
 
 ```bash
 export PROJECT_ROOT=$PWD
@@ -77,6 +88,10 @@ export OUT=$PWD/out_ultimate/reproduce_srse
 
 bash reproducibility/commands/reproduce_srse_paper_experiments.sh main_c100_eta03
 ```
+
+公开 launcher 默认不触发 CIFAR 下载，优先使用 `DATA_ROOT` 下已经放置好的
+数据。只有希望 TorchVision 自动下载 CIFAR 文件时，才设置
+`CIFAR_DOWNLOAD=1`。
 
 ## 数据集
 
@@ -187,6 +202,16 @@ bash reproducibility/commands/reproduce_srse_cifar100h_experiments.sh main_table
 launcher 会在执行前打印完整 Python 命令，并把输出写入 `OUT`。
 对于众包数据集，`crowd_srse_table` 会运行 Benthic、Plankton 和
 Treeversity 的 `lpi=3` 与 `lpi=10` 条件。
+
+快速可执行性检查可以使用：
+
+```bash
+bash reproducibility/commands/smoke_test_srse_entrypoints.sh all
+```
+
+该 smoke 脚本默认使用 `EPOCHS=1`，用于验证公开的 CIFAR、CIFAR100H、
+众包数据集、component ablation、Topology-DAES、PSS、no-CR/no-MixUp 入口
+能否执行。它不是结果复现；完整 500-epoch 结果仍使用上面的 paper launcher。
 
 ## 预期结果尺度
 

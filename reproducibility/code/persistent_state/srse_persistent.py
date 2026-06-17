@@ -107,6 +107,8 @@ def parse_args():
                         choices=['CIFAR10', 'CIFAR100', 'CIFAR100H', 
                                 'Treeversity', 'Benthic', 'Plankton',])
     parser.add_argument('--train_root', default='./data', help='root for train data')
+    parser.add_argument('--download', action='store_true',
+                        help='Download CIFAR data if it is missing under train_root. Disabled by default for reproducible/offline runs.')
     parser.add_argument('--out', type=str, default='./out_ultimate', help='Directory for output')
     parser.add_argument('--seeds', type=int, nargs='+', default=[1], help='List of random seeds.')
     parser.add_argument('--num_workers', type=int, default=4, help='num workers')
@@ -139,6 +141,10 @@ def parse_args():
     parser.add_argument('--consistency_weight', type=float, default=1.0, help='Weight for consistency loss.')
 
     # --- 🚀 消融实验开关 (Ablation Study Flags) ---
+    parser.add_argument('--ablate_no_reliable_mixup', action='store_true',
+                        help='[Ablation] Disable MixUp on reliable set.')
+    parser.add_argument('--ablate_no_cr', action='store_true',
+                        help='[Ablation] Disable consistency regularization.')
     parser.add_argument('--no_reliable_mixup', action='store_true', help='[Ablation] Disable Mixup on reliable set.')
     parser.add_argument('--no_rebalance', action='store_true', help='[Ablation] Disable class rebalancing on pseudo-labels.')
     parser.add_argument('--no_softmatch', action='store_true', help='[Ablation] Disable SoftMatch weighting (force weight=1.0).')
@@ -287,6 +293,87 @@ def parse_args():
                         help="[AdapDepth] Expected minimum ratio of reliable samples (default: 0.5). Used with --adaptive_prop_depth.")
     # >>>>>>> NEW: 根据可靠集数量和共识率动态截断传播深度。
     # ===========================================================================
+
+    parser.add_argument('--source_update_mode', type=str, default='none',
+                        choices=['none', 'fredis_full', 'fredis_move', 'irnet_correct',
+                                 'irnet_full', 'add_remove', 'hard_insert',
+                                 'pals_augment', 'hard_remove', 'mix',
+                                 'soft_evidence', 'pico_soft_target', 'replace',
+                                 'topk_reconstruct'],
+                        help='Persistent source-state update rule.')
+    parser.add_argument('--source_update_scope', type=str, default='none',
+                        choices=['none', 'all', 'all_highconf', 'unreliable_highconf'],
+                        help='Rows eligible for persistent source-state updates.')
+    parser.add_argument('--source_update_evidence', type=str, default='model',
+                        choices=['model', 'p2'],
+                        help='Evidence view used for source-state writes when multiple views are available.')
+    parser.add_argument('--source_update_threshold', type=float, default=0.65,
+                        help='Fixed confidence threshold for source-state updates.')
+    parser.add_argument('--source_update_threshold_start', type=float, default=0.95,
+                        help='Start threshold for linear source-state update schedules.')
+    parser.add_argument('--source_update_threshold_end', type=float, default=0.85,
+                        help='End threshold for linear source-state update schedules.')
+    parser.add_argument('--source_update_schedule', type=str, default='fixed',
+                        choices=['fixed', 'linear'],
+                        help='Threshold schedule for source-state updates.')
+    parser.add_argument('--source_update_alpha', type=float, default=0.3,
+                        help='Soft update factor for source-state writeback modes.')
+    parser.add_argument('--source_update_start_epoch', type=int, default=-1,
+                        help='First epoch for scheduled source-state update modes; -1 uses the mode default.')
+    parser.add_argument('--source_insert_margin', type=float, default=0.0,
+                        help='Extra margin required before inserting a non-candidate label into the source state.')
+    parser.add_argument('--source_reset_interval', type=int, default=0,
+                        help='Reset mutable source state to the native prior every N epochs; 0 disables reset.')
+
+    parser.add_argument('--fredis_refine_threshold', type=float, default=1e-2,
+                        help='FREDIS refinement confidence threshold.')
+    parser.add_argument('--fredis_refine_min_conf', type=float, default=0.0,
+                        help='Minimum model confidence for FREDIS candidate insertion.')
+    parser.add_argument('--fredis_disamb_threshold', type=float, default=0.8,
+                        help='FREDIS disambiguation threshold.')
+    parser.add_argument('--fredis_disamb_max_conf', type=float, default=1.0,
+                        help='Maximum model confidence for FREDIS candidate removal.')
+    parser.add_argument('--fredis_min_disamb_over_refine', type=float, default=1.0,
+                        help='Minimum disambiguation support required to cap FREDIS refinements.')
+    parser.add_argument('--fredis_top_non_candidate_only', action='store_true',
+                        help='Restrict FREDIS insertion to the top non-candidate label.')
+    parser.add_argument('--fredis_full_theta', type=float, default=1e-6)
+    parser.add_argument('--fredis_full_delta', type=float, default=1.0)
+    parser.add_argument('--fredis_full_inc', type=float, default=1e-6)
+    parser.add_argument('--fredis_full_dec', type=float, default=1e-6)
+    parser.add_argument('--fredis_full_times', type=float, default=2.0)
+    parser.add_argument('--fredis_full_change_size', type=int, default=500)
+    parser.add_argument('--fredis_full_theta_end', type=float, default=0.9)
+    parser.add_argument('--fredis_full_delta_end', type=float, default=0.1)
+    parser.add_argument('--fredis_full_update_interval', type=int, default=20)
+
+    parser.add_argument('--irnet_tau_boundary', type=float, default=0.0,
+                        help='IRNet boundary threshold for candidate correction.')
+    parser.add_argument('--irnet_min_non_candidate_conf', type=float, default=0.0,
+                        help='Minimum confidence for IRNet non-candidate insertion.')
+    parser.add_argument('--irnet_full_threshold_start', type=float, default=0.008)
+    parser.add_argument('--irnet_full_threshold_end', type=float, default=0.008)
+    parser.add_argument('--irnet_full_correct_duration', type=int, default=2000)
+    parser.add_argument('--irnet_full_correct_deletion', action='store_true')
+    parser.add_argument('--irnet_full_correct_update', type=str, default='case3',
+                        choices=['case1', 'case2', 'case3', 'none'])
+    parser.add_argument('--irnet_full_num_views', type=int, default=3)
+
+    parser.add_argument('--persistent_promotion_mode', type=str, default='none',
+                        choices=['none', 'hard'],
+                        help='Persistent promotion mode for high-confidence labels.')
+    parser.add_argument('--promotion_scope', type=str, default='none',
+                        choices=['none', 'all_highconf', 'unreliable_highconf',
+                                 'srse_estimated_noise_highconf'],
+                        help='Rows eligible for persistent promotion.')
+    parser.add_argument('--promotion_threshold', type=float, default=0.95,
+                        help='Confidence threshold for persistent promotion.')
+    parser.add_argument('--promotion_source', type=str, default='p2',
+                        choices=['model', 'p2'],
+                        help='Evidence source for persistent promotion.')
+    parser.add_argument('--promotion_label_space', type=str, default='all',
+                        choices=['all', 'non_candidate'],
+                        help='Label space considered by persistent promotion.')
 
     return parser.parse_args()
 # (在 Section 2: 数据处理与模型)
@@ -2479,7 +2566,7 @@ def run_single_experiment(args):
     if args.dataset in ['CIFAR10', 'CIFAR100', 'CIFAR100H']:
         is_h = 'H' in args.dataset
         BaseClass = CIFAR100Partial if '100' in args.dataset else CIFAR10Partial
-        base_train_ds = BaseClass(args, train=True, download=True, transform=None)
+        base_train_ds = BaseClass(args, train=True, download=args.download, transform=None)
 
         # 初始化修改掩码
         if not hasattr(base_train_ds, 'modified_mask'):
@@ -2493,7 +2580,7 @@ def run_single_experiment(args):
                 base_train_ds.partial_noise(args.pr, args.nr)
 
         TestClass = datasets.CIFAR100 if '100' in args.dataset else datasets.CIFAR10
-        test_ds = TestClass(root=args.train_root, train=False, download=True, transform=test_t)
+        test_ds = TestClass(root=args.train_root, train=False, download=args.download, transform=test_t)
 
     elif args.dataset in ['Treeversity', 'Benthic', 'Plankton']:
         crowd_root_map = {'Benthic': './Benthic', 'Plankton': './Plankton', 'Treeversity': './Treeversity'}

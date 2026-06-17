@@ -67,7 +67,19 @@ bash reproducibility/commands/reproduce_srse_paper_experiments.sh help
 PY=echo bash reproducibility/commands/reproduce_srse_paper_experiments.sh main_c100_eta03
 ```
 
-After placing datasets as described below, run the selected experiment:
+After placing datasets as described below, run a one-epoch executable smoke
+check before starting a full table:
+
+```bash
+export PROJECT_ROOT=$PWD
+export DATA_ROOT=$PWD/data
+export CROWD_ROOT=$PWD
+export GPU_ID=0
+
+bash reproducibility/commands/smoke_test_srse_entrypoints.sh cifar
+```
+
+Then run the selected full experiment:
 
 ```bash
 export PROJECT_ROOT=$PWD
@@ -78,6 +90,10 @@ export OUT=$PWD/out_ultimate/reproduce_srse
 
 bash reproducibility/commands/reproduce_srse_paper_experiments.sh main_c100_eta03
 ```
+
+The public launchers default to offline CIFAR loading. Set
+`CIFAR_DOWNLOAD=1` only when you want TorchVision to download CIFAR files into
+`DATA_ROOT`.
 
 ## Datasets
 
@@ -189,6 +205,17 @@ bash reproducibility/commands/reproduce_srse_cifar100h_experiments.sh main_table
 The launcher prints each full Python command before execution and stores outputs under `OUT`.
 For crowdsourced datasets, `crowd_srse_table` runs Benthic, Plankton, and
 Treeversity at both `lpi=3` and `lpi=10`.
+
+For quick executable checks, use:
+
+```bash
+bash reproducibility/commands/smoke_test_srse_entrypoints.sh all
+```
+
+This smoke script uses `EPOCHS=1` by default and verifies public CIFAR,
+CIFAR100H, crowdsourced-dataset, component-ablation, Topology-DAES, PSS, and
+no-CR/no-MixUp entry points. It is not a result reproduction; use the paper
+launcher above for the full 500-epoch runs.
 
 ## Expected Result Scale
 

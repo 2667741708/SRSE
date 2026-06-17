@@ -106,6 +106,8 @@ def parse_args():
                         choices=['CIFAR10', 'CIFAR100', 'CIFAR100H', 
                                 'Treeversity', 'Benthic', 'Plankton',])
     parser.add_argument('--train_root', default='./data', help='root for train data')
+    parser.add_argument('--download', action='store_true',
+                        help='Download CIFAR data if it is missing under train_root. Disabled by default for reproducible/offline runs.')
     parser.add_argument('--out', type=str, default='./out_ultimate', help='Directory for output')
     parser.add_argument('--seeds', type=int, nargs='+', default=[1], help='List of random seeds.')
     parser.add_argument('--num_workers', type=int, default=4, help='num workers')
@@ -135,10 +137,15 @@ def parse_args():
     # 损失函数超参数
     parser.add_argument('--mixup_alpha', type=float, default=1.0, help='Alpha for Mixup.')
     parser.add_argument('--lsr', type=float, default=0.5, help='Label smoothing rate.')
+    parser.add_argument('--ema_alpha', type=float, default=0.999, help='EMA momentum factor (default: 0.999).')
 
     # --- 🚀 消融实验开关 (Ablation Study Flags) ---
     parser.add_argument('--ablate_no_reliable_mixup', action='store_true',
                         help='[AuditAblation] Disable MixUp in the reliable supervised branch; weak/strong images are forwarded without mixing.')
+    parser.add_argument('--no_reliable_mixup', action='store_true',
+                        help='Alias-style ablation flag for disabling MixUp in the reliable supervised branch.')
+    parser.add_argument('--ablate_no_cr', action='store_true',
+                        help='[Ablation] Disable consistency regularization.')
     parser.add_argument('--no_rebalance', action='store_true', help='[Ablation] Disable class rebalancing on pseudo-labels.')
     
     # [新增] 完全禁用不可靠集训练
@@ -181,6 +188,10 @@ def parse_args():
     # 2. DAES 算法控制 (拓扑构建)
     
     # [新增] DAES 参数化控制
+    parser.add_argument('--daes_entropy_coeff', type=float, default=0.5,
+                        help='[DAES] Coefficient for entropy-based temperature adjustment (default: 0.5).')
+    parser.add_argument('--daes_sim_power', type=float, default=2.0,
+                        help='[DAES] Power to raise similarity to (default: 2.0).')
     
     # [新增] 拓扑参考模式
 
@@ -223,7 +234,10 @@ def parse_args():
                         help='[UnifiedAblation] Replace adaptive r_i with constant 0.5.')
     parser.add_argument('--ablate_no_candidate_prior', action='store_true',
                         help='[UnifiedAblation] Remove candidate-prior mask from model evidence before second propagation.')
-    parser.add_argument('--ablate_no_salvage_training', action='store_true',
+    parser.add_argument('--ablate_global_topk_quota', action='store_true',
+                        help='[UnifiedAblation] Disable the class-balanced quota and use a global reliable-sample quota.')
+    parser.add_argument('--ablate_no_salvage_training', '--disable_salvage_training',
+                        dest='ablate_no_salvage_training', action='store_true',
                         help='[AuditAblation] Detect salvage samples but do not promote them into the active supervised training set.')
 
     parser.add_argument('--model_warmup_epochs', type=int, default=20,
@@ -1520,7 +1534,7 @@ def run_single_experiment(args):
     if args.dataset in ['CIFAR10', 'CIFAR100', 'CIFAR100H']:
         is_h = 'H' in args.dataset
         BaseClass = CIFAR100Partial if '100' in args.dataset else CIFAR10Partial
-        base_train_ds = BaseClass(args, train=True, download=True, transform=None)
+        base_train_ds = BaseClass(args, train=True, download=args.download, transform=None)
 
         # 初始化修改掩码
         if not hasattr(base_train_ds, 'modified_mask'):
@@ -1534,7 +1548,7 @@ def run_single_experiment(args):
                 base_train_ds.partial_noise(args.pr, args.nr)
 
         TestClass = datasets.CIFAR100 if '100' in args.dataset else datasets.CIFAR10
-        test_ds = TestClass(root=args.train_root, train=False, download=True, transform=test_t)
+        test_ds = TestClass(root=args.train_root, train=False, download=args.download, transform=test_t)
 
     elif args.dataset in ['Treeversity', 'Benthic', 'Plankton']:
         crowd_root_map = {'Benthic': './Benthic', 'Plankton': './Plankton', 'Treeversity': './Treeversity'}
@@ -1707,7 +1721,7 @@ def run_single_experiment(args):
         # 决定是否在训练中使用打捞样本
         # 策略:只要能打捞出来,就视为 Active Sample (在 Phase 2 尤为重要)
         detected_count = salvage_mask.sum().item() if salvage_mask is not None else 0
-        use_salvage_for_training = (detected_count > 0) and (not bool(getattr(args, 'disable_salvage_training', False)))
+        use_salvage_for_training = (detected_count > 0) and (not bool(getattr(args, 'ablate_no_salvage_training', False)))
         if detected_count > 0 and not use_salvage_for_training:
             logger.info(f" [Ablation] Salvage training disabled; detected {detected_count} candidates but none promoted.")
 
