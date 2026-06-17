@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Smoke-test the r_i model-confidence mode used by the NSE ablation script."""
+"""Smoke-test the r_i model-confidence mode used by the SRSE ablation script."""
 
 from __future__ import annotations
 
@@ -11,8 +11,9 @@ import torch
 
 
 def load_module():
-    script_path = Path(os.environ["NSE_SCRIPT_PATH"]).resolve()
-    spec = importlib.util.spec_from_file_location("nse_train_under_test", script_path)
+    script_env = os.environ["SRSE_SCRIPT_PATH"]
+    script_path = Path(script_env).resolve()
+    spec = importlib.util.spec_from_file_location("srse_train_under_test", script_path)
     if spec is None or spec.loader is None:
         raise RuntimeError(f"cannot import {script_path}")
     module = importlib.util.module_from_spec(spec)

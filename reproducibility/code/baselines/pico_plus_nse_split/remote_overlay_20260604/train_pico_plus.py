@@ -120,15 +120,15 @@ parser.add_argument('--cls_weight', default=2, type=float,
                     help='weights for the losses of mixup loss')
 parser.add_argument('--split_mode', default='prototype', type=str,
                     choices=['prototype', 'nse_topology', 'nse_topology_daes'],
-                    help='PiCO+ clean/noisy split. prototype is official PiCO+; nse_topology_daes replaces only the split with the NSE source-anchored topology-DAES selector.')
+                    help='PiCO+ clean/noisy split. prototype is official PiCO+; nse_topology_daes replaces only the split with the SRSE source-anchored topology-DAES selector.')
 parser.add_argument('--nse_k', default=15, type=int,
-                    help='Number of nearest neighbours for NSE-style split.')
+                    help='Number of nearest neighbours for SRSE-style split.')
 parser.add_argument('--nse_delta', default=0.25, type=float,
-                    help='Per-class selection quantile for NSE-style split.')
+                    help='Per-class selection quantile for SRSE-style split.')
 parser.add_argument('--nse_model_weight', default=0.5, type=float,
-                    help='Maximum model-evidence weight in NSE stage-2 fusion.')
+                    help='Maximum model-evidence weight in SRSE stage-2 fusion.')
 parser.add_argument('--nse_model_warmup_epochs', default=10, type=float,
-                    help='Warmup horizon for model-evidence fusion in NSE stage-2.')
+                    help='Warmup horizon for model-evidence fusion in SRSE stage-2.')
 parser.add_argument('--nse_topology_rel_mode', default='masked_entropy', type=str,
                     choices=['masked_entropy', 'kl', 'agree'],
                     help='Reliability score used by the topology part of topology-DAES.')
@@ -148,7 +148,7 @@ parser.add_argument('--nse_daes_sim_power', default=2.0, type=float,
 parser.add_argument('--nse_entropy_coeff', default=0.5, type=float,
                     help='Backward-compatible alias for --nse_daes_entropy_coeff.')
 parser.add_argument('--nse_chunk_size', default=1024, type=int,
-                    help='Chunk size for full-dataset KNN in the NSE-style split.')
+                    help='Chunk size for full-dataset KNN in the SRSE-style split.')
 
 def main():
     args = parser.parse_args()

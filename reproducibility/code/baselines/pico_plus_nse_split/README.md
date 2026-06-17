@@ -1,4 +1,4 @@
-# PiCO+ With NSE Clean/Noisy Split
+# PiCO+ With SRSE-Style Clean/Noisy Split
 
 This directory defines a controlled baseline-edit experiment for PiCO+.
 

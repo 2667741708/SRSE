@@ -124,7 +124,7 @@ def _filter_by_candidate_quantile(scores, source_prior, args):
 def nse_reliable_set_selection(args, epoch, sel_stats, train_givenY):
     """Replace only PiCO+'s prototype-distance clean/noisy split.
 
-    The selector mirrors the NSE topology-DAES reliable-set path:
+    The selector mirrors the SRSE topology-DAES reliable-set path:
     candidate source -> topology-DAES propagation -> candidate-constrained
     model fusion -> topology-DAES propagation -> per-class quantile selection.
     PiCO+'s losses, EMA confidence target, prototypes, queues, MixUp, and
@@ -133,7 +133,7 @@ def nse_reliable_set_selection(args, epoch, sel_stats, train_givenY):
     device = sel_stats['is_rel'].device
     seen = sel_stats.get('seen', torch.ones_like(sel_stats['is_rel'])).bool()
     if seen.sum() < max(2, int(args.nse_k) + 1):
-        print('[NSESplit] not enough stored features; keeping all samples reliable')
+        print('[SRSESplit] not enough stored features; keeping all samples reliable')
         sel_stats['is_rel'] = torch.ones_like(sel_stats['is_rel']).bool()
         return
 
@@ -170,7 +170,7 @@ def nse_reliable_set_selection(args, epoch, sel_stats, train_givenY):
     sel_stats['is_rel'] = is_rel
 
     print(
-        '[NSESplit:topology_daes] epoch={} reliable={} total={} ratio={:.4f} '
+        '[SRSESplit:topology_daes] epoch={} reliable={} total={} ratio={:.4f} '
         'limit={} w_model={:.4f} r_i_mean={:.4f} maxp_mean={:.4f} count_q25={:.2f}'.format(
             epoch,
             int(is_rel.sum().item()),

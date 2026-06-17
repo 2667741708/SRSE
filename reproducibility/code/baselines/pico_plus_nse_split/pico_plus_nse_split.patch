@@ -15,17 +15,17 @@ index ff1778a..61ccc1b 100644
                      help='weights for the losses of mixup loss')
 +parser.add_argument('--split_mode', default='prototype', type=str,
 +                    choices=['prototype', 'nse_topology'],
-+                    help='PiCO+ clean/noisy split. prototype is official PiCO+; nse_topology replaces only the split with an NSE-style source-anchored topology selector.')
++                    help='PiCO+ clean/noisy split. prototype is official PiCO+; nse_topology replaces only the split with an SRSE-style source-anchored topology selector.')
 +parser.add_argument('--nse_k', default=15, type=int,
-+                    help='Number of nearest neighbours for NSE-style split.')
++                    help='Number of nearest neighbours for SRSE-style split.')
 +parser.add_argument('--nse_delta', default=0.25, type=float,
-+                    help='Per-class selection quantile for NSE-style split.')
++                    help='Per-class selection quantile for SRSE-style split.')
 +parser.add_argument('--nse_model_weight', default=0.5, type=float,
-+                    help='Weight of candidate-projected classifier evidence in NSE-style split.')
++                    help='Weight of candidate-projected classifier evidence in SRSE-style split.')
 +parser.add_argument('--nse_entropy_coeff', default=0.5, type=float,
 +                    help='Entropy damping coefficient for topology-DAES-like neighbour weights.')
 +parser.add_argument('--nse_chunk_size', default=1024, type=int,
-+                    help='Chunk size for full-dataset KNN in the NSE-style split.')
++                    help='Chunk size for full-dataset KNN in the SRSE-style split.')
  
  def main():
      args = parser.parse_args()
@@ -82,7 +82,7 @@ index 0000000..dc6d004
 +
 +@torch.no_grad()
 +def _chunked_knn_votes(features, source_prior, args):
-+    """NSE-style topology/source anchored propagation used only for splitting.
++    """SRSE-style topology/source anchored propagation used only for splitting.
 +
 +    This function does not modify the candidate source. It uses the native
 +    candidate distribution as neighbour evidence and returns a propagated
@@ -129,7 +129,7 @@ index 0000000..dc6d004
 +    device = sel_stats['is_rel'].device
 +    seen = sel_stats.get('seen', torch.ones_like(sel_stats['is_rel'])).bool()
 +    if seen.sum() < max(2, int(args.nse_k) + 1):
-+        print('[NSESplit] not enough stored features; keeping all samples reliable')
++        print('[SRSESplit] not enough stored features; keeping all samples reliable')
 +        sel_stats['is_rel'] = torch.ones_like(sel_stats['is_rel']).bool()
 +        return
 +
@@ -172,6 +172,6 @@ index 0000000..dc6d004
 +        is_rel[idx] = True
 +
 +    sel_stats['is_rel'] = is_rel
-+    print('[NSESplit] epoch={} reliable={} total={} ratio={:.4f}'.format(
++    print('[SRSESplit] epoch={} reliable={} total={} ratio={:.4f}'.format(
 +        epoch, int(is_rel.sum().item()), int(is_rel.numel()), float(is_rel.float().mean().item())
 +    ))
