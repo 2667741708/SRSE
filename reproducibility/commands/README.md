@@ -10,6 +10,9 @@ Use the unified launcher from the repository root:
 
 ```bash
 bash reproducibility/commands/reproduce_srse_paper_experiments.sh help
+
+# Optional command preview: prints Python commands without starting training.
+PY=echo bash reproducibility/commands/reproduce_srse_paper_experiments.sh main_c100_eta03
 ```
 
 The launcher supports the current paper-facing targets:

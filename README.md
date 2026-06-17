@@ -46,6 +46,39 @@ conda activate srse
 
 Full 500-epoch CIFAR runs were produced on NVIDIA GPUs. Small numerical differences can occur across GPU models, PyTorch/CUDA versions, and cuDNN determinism settings.
 
+## Quick Start
+
+Clone the repository and create the environment:
+
+```bash
+git clone https://github.com/2667741708/SRSE.git
+cd SRSE
+
+conda env create -f environment.yml
+conda activate srse
+```
+
+Run a launcher sanity check that does not require datasets or a GPU:
+
+```bash
+bash reproducibility/commands/reproduce_srse_paper_experiments.sh help
+
+# Optional command preview: prints the Python command without starting training.
+PY=echo bash reproducibility/commands/reproduce_srse_paper_experiments.sh main_c100_eta03
+```
+
+After placing datasets as described below, run the selected experiment:
+
+```bash
+export PROJECT_ROOT=$PWD
+export DATA_ROOT=$PWD/data
+export CROWD_ROOT=$PWD
+export GPU_ID=0
+export OUT=$PWD/out_ultimate/reproduce_srse
+
+bash reproducibility/commands/reproduce_srse_paper_experiments.sh main_c100_eta03
+```
+
 ## Datasets
 
 Dataset binaries are excluded. Download and place them according to:

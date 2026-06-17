@@ -45,6 +45,39 @@ conda activate srse
 
 完整 500-epoch CIFAR 实验是在 NVIDIA GPU 上生成的。不同 GPU 型号、PyTorch/CUDA 版本和 cuDNN determinism 设置可能带来小幅数值差异。
 
+## Quick Start / 快速开始
+
+克隆仓库并创建环境：
+
+```bash
+git clone https://github.com/2667741708/SRSE.git
+cd SRSE
+
+conda env create -f environment.yml
+conda activate srse
+```
+
+先运行一个不依赖数据集或 GPU 的 launcher sanity check：
+
+```bash
+bash reproducibility/commands/reproduce_srse_paper_experiments.sh help
+
+# 可选：只打印 Python 命令，不启动训练。
+PY=echo bash reproducibility/commands/reproduce_srse_paper_experiments.sh main_c100_eta03
+```
+
+按照下文放置数据集后，再运行具体实验：
+
+```bash
+export PROJECT_ROOT=$PWD
+export DATA_ROOT=$PWD/data
+export CROWD_ROOT=$PWD
+export GPU_ID=0
+export OUT=$PWD/out_ultimate/reproduce_srse
+
+bash reproducibility/commands/reproduce_srse_paper_experiments.sh main_c100_eta03
+```
+
 ## 数据集
 
 仓库不包含数据集二进制文件。请按照下面两个文件下载并放置数据：

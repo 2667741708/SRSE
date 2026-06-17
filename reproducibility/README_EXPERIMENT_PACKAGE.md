@@ -20,13 +20,24 @@ launch wrappers.
 ## Quick Start
 
 ```bash
-export PROJECT_ROOT=/path/to/unpacked/package
-export PY=/path/to/python
-export DATA_ROOT=/path/to/cifar/root
-export CROWD_ROOT=/path/to/dcic/root
-export GPU_ID=0
+git clone https://github.com/2667741708/SRSE.git
+cd SRSE
+
+conda env create -f environment.yml
+conda activate srse
 
 bash reproducibility/commands/reproduce_srse_paper_experiments.sh help
+
+# Optional command preview: prints the Python command without starting training.
+PY=echo bash reproducibility/commands/reproduce_srse_paper_experiments.sh main_c100_eta03
+
+export PROJECT_ROOT=$PWD
+export DATA_ROOT=$PWD/data
+export CROWD_ROOT=$PWD
+export GPU_ID=0
+export OUT=$PWD/out_ultimate/reproduce_srse
+
+# Run this after placing CIFAR/DCIC data under DATA_ROOT/CROWD_ROOT.
 bash reproducibility/commands/reproduce_srse_paper_experiments.sh main_c100_eta03
 ```
 
