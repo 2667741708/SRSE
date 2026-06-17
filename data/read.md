@@ -43,8 +43,3 @@ Treeversity#6/annotations.json
 Each folder should also contain the fold image subdirectories used by the DCIC
 annotations. Some loaders accept `Treeversity` and map it to `Treeversity#6`;
 keep both names aligned if your extraction uses only one of them.
-
-## Optional CUB-200-2011
-
-- Official dataset page:
-  https://www.vision.caltech.edu/datasets/cub_200_2011/

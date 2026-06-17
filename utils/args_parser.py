@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 Module: utils/args_parser.py
 Decoupled from: v3_2passKNN_refactored.py
@@ -70,8 +70,7 @@ def parse_args():
 
     # 在 parse_args() 函数中修改:
     parser.add_argument('--dataset', type=str, default='CIFAR100',
-                        choices=['CIFAR10', 'CIFAR100', 'CIFAR100H', 'CUB200',
-                                'Treeversity', 'Benthic', 'Plankton',])
+                        choices=['CIFAR10', 'CIFAR100', 'CIFAR100H', 'Treeversity', 'Benthic', 'Plankton',])
     parser.add_argument('--train_root', default='./data', help='root for train data')
     parser.add_argument('--out', type=str, default='./out_ultimate', help='Directory for output')
     parser.add_argument('--seeds', type=int, nargs='+', default=[1], help='List of random seeds.')
@@ -162,7 +161,7 @@ def parse_args():
     parser.add_argument('--daes_entropy_weight', type=float, default=0.2,
                         help='[DAES] Sensitivity to local entropy (tau = base + weight * H).')
     parser.add_argument('--daes_sharpening_power', type=float, default=2.0,
-                        help='[DAES] Sharpening power for local mean calculation (CUB=2.0, Standard=1.0).')
+                        help='[DAES] Sharpening power for local mean calculation (default=1.0).')
 
     # [新增] DAES 参数化控制
     parser.add_argument('--daes_spatial_temp', type=float, default=0.5,
@@ -255,3 +254,4 @@ def parse_args():
 
     return parser.parse_args()
 # (在 Section 2: 数据处理与模型)
+

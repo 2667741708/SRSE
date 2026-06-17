@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 Module: utils/models.py
 Decoupled from: v3_2passKNN_refactored.py
@@ -97,8 +97,8 @@ def get_base_encoder(network_name, dataset_name):
     
     
     # --- (修改) 扩展使用预训练权重的条件 ---
-    # use_pretrained = dataset_name in ['CUB200', 'Treeversity', 'Benthic', 'Plankton','Synthetic',]
-    use_pretrained = dataset_name in ['CUB200', 'Treeversity', 'Benthic', 'Plankton',]
+    # use_pretrained = dataset_name in ['Treeversity', 'Benthic', 'Plankton','Synthetic',]
+    use_pretrained = dataset_name in ['Treeversity', 'Benthic', 'Plankton',]
     
     if network_name == 'R50':
         base_model = resnet50(weights='IMAGENET1K_V1' if use_pretrained else None)
@@ -128,4 +128,5 @@ class SoftMatchWeightManager:
     def __call__(self, preds, index, return_stats=False):
         self.prob_model[index] = self.momentum * self.prob_model[index] + (1 - self.momentum) * preds.detach(); max_probs_model = self.prob_model[index].max(dim=1)[0]; mu = max_probs_model.mean(); std = max_probs_model.std() if max_probs_model.size(0) > 1 else torch.tensor(1e-8, device=self.device); weights = torch.exp(-torch.pow(F.relu(mu - preds.max(dim=1)[0]), 2) / (2 * self.n_sigma * std**2 + 1e-8))
         return (weights.detach(), mu.item(), std.item()) if return_stats else weights.detach()
+
 

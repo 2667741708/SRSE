@@ -3,7 +3,6 @@ index ff1778a..61ccc1b 100644
 --- a/train_pico_plus.py
 +++ b/train_pico_plus.py
 @@ -25,6 +25,7 @@ from utils_plus.utils_loss import partial_loss, SupConLoss, ce_loss
- from utils_plus.cub200 import load_cub200
  from utils_plus.cifar10 import load_cifar10
  from utils_plus.cifar100 import load_cifar100
 +from utils_plus.nse_reliable_split import nse_reliable_set_selection

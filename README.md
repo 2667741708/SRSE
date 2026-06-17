@@ -19,7 +19,10 @@ reproducibility/
   commands/                   Unified paper-experiment launcher.
 ```
 
-The current public snapshot removes the runtime dependency on `faiss-cpu`. KNN-based supervision selection uses a PyTorch inner-product `topk` fallback, which keeps the environment easier to reproduce while preserving the same neighborhood-selection contract.
+The current public snapshot does not require an external ANN/KNN backend. The
+paper-facing training entries use the in-script PyTorch chunked KNN
+implementation, and unused legacy neighbor-selection helpers have been removed
+from the release code.
 
 ## Environment
 
@@ -59,7 +62,6 @@ Main sources:
 - DCIC Zenodo record: https://zenodo.org/records/7180818
 - DCIC DOI: https://doi.org/10.5281/zenodo.7152309
 - DCIC source code: https://github.com/Emprime/dcic
-- Optional CUB-200-2011: https://www.vision.caltech.edu/datasets/cub_200_2011/
 
 Expected local layout:
 
@@ -82,7 +84,7 @@ Treeversity#6/
 
 ## Pretrained Weights
 
-CIFAR experiments use ResNet-18 from scratch. Crowdsourced datasets and optional CUB runs use TorchVision ImageNet-1K pretrained backbones:
+CIFAR experiments use ResNet-18 from scratch. Crowdsourced datasets use TorchVision ImageNet-1K pretrained backbones:
 
 - ResNet-18 `IMAGENET1K_V1`: https://download.pytorch.org/models/resnet18-f37072fd.pth
 - ResNet-50 `IMAGENET1K_V1`: https://download.pytorch.org/models/resnet50-0676ba61.pth

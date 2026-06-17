@@ -23,7 +23,6 @@ from model import PiCO_PLUS
 from resnet import *
 from utils_plus.utils_algo import *
 from utils_plus.utils_loss import partial_loss, SupConLoss, ce_loss
-from utils_plus.cub200 import load_cub200
 from utils_plus.cifar10 import load_cifar10
 from utils_plus.cifar100 import load_cifar100
 from utils_plus.nse_reliable_split import nse_reliable_set_selection
@@ -35,7 +34,7 @@ torch.set_printoptions(precision=2, sci_mode=False)
 
 parser = argparse.ArgumentParser(description='PyTorch implementation of ICLR 2022 Oral paper PiCO')
 parser.add_argument('--dataset', default='cifar10', type=str,
-                    choices=['cifar10', 'cifar100', 'cub200'],
+                    choices=['cifar10', 'cifar100'],
                     help='dataset name (cifar10)')
 parser.add_argument('--exp-dir', default='experiment/PiCO', type=str,
                     help='experiment directory for saving checkpoints and logs')
@@ -285,11 +284,7 @@ def main_worker(gpu, ngpus_per_node, args):
         else:
             print("=> no checkpoint found at '{}'".format(args.resume))
 
-    if args.dataset == 'cub200':
-        input_size = 224  # fixed as 224
-        train_loader, train_givenY, train_sampler, test_loader = load_cub200(input_size=input_size
-            , partial_rate=args.partial_rate, noisy_rate=args.noisy_rate, batch_size=args.batch_size)
-    elif args.dataset == 'cifar10':
+    if args.dataset == 'cifar10':
         train_loader, train_givenY, train_sampler, test_loader = load_cifar10(partial_rate=args.partial_rate, batch_size=args.batch_size, noisy_rate=args.noisy_rate)
     elif args.dataset == 'cifar100':
         train_loader, train_givenY, train_sampler, test_loader = load_cifar100(partial_rate=args.partial_rate, batch_size=args.batch_size, hierarchical=args.hierarchical, noisy_rate=args.noisy_rate)

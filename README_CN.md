@@ -19,7 +19,9 @@ reproducibility/
   commands/                   统一论文实验 launcher。
 ```
 
-当前公开快照已经去掉 `faiss-cpu` 运行依赖。KNN 监督选择路径改用 PyTorch 内积 `topk` fallback，从而降低环境复现成本，同时保持相同的邻域选择接口语义。
+当前公开快照不需要额外的 ANN/KNN 后端库。论文主线训练入口使用脚本内部的
+PyTorch chunked KNN 实现，未被调用的旧邻居选择 helper 函数已经从 release
+代码中移除。
 
 ## 环境配置
 
@@ -59,7 +61,6 @@ conda activate srse
 - DCIC Zenodo record：https://zenodo.org/records/7180818
 - DCIC DOI：https://doi.org/10.5281/zenodo.7152309
 - DCIC source code：https://github.com/Emprime/dcic
-- 可选 CUB-200-2011：https://www.vision.caltech.edu/datasets/cub_200_2011/
 
 期望的本地目录布局：
 
@@ -82,7 +83,7 @@ Treeversity#6/
 
 ## 预训练权重
 
-CIFAR 实验使用从头训练的 ResNet-18。众包数据集和可选 CUB 实验使用 TorchVision ImageNet-1K 预训练 backbone：
+CIFAR 实验使用从头训练的 ResNet-18。众包数据集使用 TorchVision ImageNet-1K 预训练 backbone：
 
 - ResNet-18 `IMAGENET1K_V1`：https://download.pytorch.org/models/resnet18-f37072fd.pth
 - ResNet-50 `IMAGENET1K_V1`：https://download.pytorch.org/models/resnet50-0676ba61.pth

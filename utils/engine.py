@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 Module: utils/engine.py
 Decoupled from: v3_2passKNN_refactored.py
@@ -19,7 +19,7 @@ def build_reliable_mixup_targets(rel_labels, knn_scores_batch, num_classes, args
     # <<<<<<< BASE: direct uniform smoothing from args.lsr
     # s_labels = s_labels * (1 - args.lsr) + args.lsr / num_classes
     # =======
-    # Crowd datasets keep the baseline zero-smoothing path, while CIFAR/CUB
+    # Crowd datasets keep the baseline zero-smoothing path, while CIFAR
     # use a KNN-residual target that no longer requires a hand-tuned lsr value.
     # >>>>>>> NEW: remove hard lsr dependence / 删除对硬编码 lsr 的依赖
     if dataset_name in {'Benthic', 'Treeversity', 'Plankton'}:
@@ -149,3 +149,4 @@ def log_tri_consensus_diagnostics(logger, epoch, true_labels,
     else:
         acc_grand = 0.0
     logger.info(f"  └─ 🌟 Grand Consensus (All 3 agree): {num_grand} samples | Acc={acc_grand:.2f}%")
+

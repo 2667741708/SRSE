@@ -36,8 +36,8 @@ all crowd runs and only vary `dataset`, `train_root`, `lpi`, and `exp_name`.
 - `--network R50 --epochs 100 --batch_size 32`
 - `--lr 0.05 --wd 0.0005 --momentum 0.9`
 - `--lr_scheduler step --lr_decay_epochs 60 80 --lr_decay_rate 0.2`
-- `--mixup_alpha 1.0 --lsr 0.0 --ema_alpha 0.999`
-- `--k_val 5 --delta 1.0 --history_len 15`
+- `--mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999`
+- `--k_val 5 --delta 1.0 --history_len 15 --consensus_power 2.0`
 - `--sim_mode_1 topology_daes --sim_mode_2 topology_daes --knn_heads 1`
 - `--max_w_model 0.1`
 - `--out ./out_ultimate --seeds 1 2 3`
@@ -54,8 +54,8 @@ python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model
   --network R18 --epochs 500 --batch_size 256 \
   --lr 0.1 --wd 0.001 --momentum 0.9 \
   --lr_scheduler cosine \
-  --mixup_alpha 1.0 --lsr 0.0 --ema_alpha 0.999 \
-  --k_val 15 --delta 0.25 --history_len 15 \
+  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
+  --k_val 15 --delta 0.25 --history_len 15 --consensus_power 2.0 \
   --sim_mode_1 topology_daes --sim_mode_2 topology_daes --knn_heads 1 \
   --max_w_model 0.5 \
   --out ./out_ultimate \
@@ -72,8 +72,8 @@ python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model
   --network R18 --epochs 500 --batch_size 256 \
   --lr 0.1 --wd 0.001 --momentum 0.9 \
   --lr_scheduler cosine \
-  --mixup_alpha 1.0 --lsr 0.0 --ema_alpha 0.999 \
-  --k_val 15 --delta 0.25 --history_len 15 \
+  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
+  --k_val 15 --delta 0.25 --history_len 15 --consensus_power 2.0 \
   --sim_mode_1 topology_daes --sim_mode_2 topology_daes --knn_heads 1 \
   --max_w_model 0.5 \
   --out ./out_ultimate \
@@ -81,18 +81,18 @@ python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model
   --seeds 1 2 3 --cuda_dev 0
 python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model.py \
   --dataset CIFAR100 --train_root ./data --lpi 10 \
-  --pr 0.05 --nr 0.3 \
+  --pr 0.01 --nr 0.0 \
   --network R18 --epochs 500 --batch_size 256 \
   --lr 0.1 --wd 0.001 --momentum 0.9 \
   --lr_scheduler cosine \
-  --mixup_alpha 1.0 --lsr 0.0 --ema_alpha 0.999 \
-  --k_val 15 --delta 0.25 --history_len 15 \
+  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
+  --k_val 15 --delta 0.25 --history_len 15 --consensus_power 2.0 \
   --sim_mode_1 topology_daes --sim_mode_2 topology_daes --knn_heads 1 \
   --max_w_model 0.5 \
   --out ./out_ultimate \
   --exp_name bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model/c100_pr001_nr00_maxw05/refactored_e500_seed123 \
-  --seeds 1 2 3  --cuda_dev 1
-
+  --seeds 1 2 3  --cuda_dev 1 
+  
 
 s1 daes s2 daes
 ```
@@ -102,8 +102,8 @@ python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model
   --network R18 --epochs 500 --batch_size 256 \
   --lr 0.1 --wd 0.001 --momentum 0.9 \
   --lr_scheduler cosine \
-  --mixup_alpha 1.0 --lsr 0.0 --ema_alpha 0.999 \
-  --k_val 15 --delta 0.25 --history_len 15 \
+  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
+  --k_val 15 --delta 0.25 --history_len 15 --consensus_power 2.0 \
   --sim_mode_1 daes --sim_mode_2 daes --knn_heads 1 \
   --max_w_model 0.5 \
   --out ./out_ultimate \
@@ -115,8 +115,8 @@ python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model
   --network R18 --epochs 500 --batch_size 256 \
   --lr 0.1 --wd 0.001 --momentum 0.9 \
   --lr_scheduler cosine \
-  --mixup_alpha 1.0 --lsr 0.0 --ema_alpha 0.999 \
-  --k_val 15 --delta 0.25 --history_len 15 \
+  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
+  --k_val 15 --delta 0.25 --history_len 15 --consensus_power 2.0 \
   --sim_mode_1 daes --sim_mode_2 daes --knn_heads 1 \
   --max_w_model 0.5 \
   --out ./out_ultimate \
@@ -129,8 +129,8 @@ python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model
   --network R18 --epochs 500 --batch_size 256 \
   --lr 0.1 --wd 0.001 --momentum 0.9 \
   --lr_scheduler cosine \
-  --mixup_alpha 1.0 --lsr 0.0 --ema_alpha 0.999 \
-  --k_val 15 --delta 0.25 --history_len 15 \
+  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
+  --k_val 15 --delta 0.25 --history_len 15 --consensus_power 2.0 \
   --sim_mode_1 daes --sim_mode_2 daes --knn_heads 1 \
   --max_w_model 0.5 \
   --out ./out_ultimate \
@@ -142,8 +142,8 @@ python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model
   --network R18 --epochs 500 --batch_size 256 \
   --lr 0.1 --wd 0.001 --momentum 0.9 \
   --lr_scheduler cosine \
-  --mixup_alpha 1.0 --lsr 0.0 --ema_alpha 0.999 \
-  --k_val 15 --delta 0.25 --history_len 15 \
+  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
+  --k_val 15 --delta 0.25 --history_len 15 --consensus_power 2.0 \
   --sim_mode_1 daes --sim_mode_2 daes --knn_heads 1 \
   --max_w_model 0.5 \
   --out ./out_ultimate \
@@ -161,8 +161,8 @@ python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model
   --network R18 --epochs 500 --batch_size 256 \
   --lr 0.1 --wd 0.001 --momentum 0.9 \
   --lr_scheduler cosine \
-  --mixup_alpha 1.0 --lsr 0.0 --ema_alpha 0.999 \
-  --k_val 15 --delta 0.25 --history_len 15 \
+  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
+  --k_val 15 --delta 0.25 --history_len 15 --consensus_power 2.0 \
   --sim_mode_1 topology_daes --sim_mode_2 topology_daes --knn_heads 1 \
   --max_w_model 0.5 \
   --out ./out_ultimate \
@@ -182,8 +182,8 @@ python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model
   --network R50 --epochs 100 --batch_size 32 \
   --lr 0.05 --wd 0.0005 --momentum 0.9 \
   --lr_scheduler step --lr_decay_epochs 60 80 --lr_decay_rate 0.2 \
-  --mixup_alpha 1.0 --lsr 0.0 --ema_alpha 0.999 \
-  --k_val 5 --delta 1.0 --history_len 15 \
+  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
+  --k_val 5 --delta 1.0 --history_len 15 --consensus_power 2.0 \
   --sim_mode_1 topology_daes --sim_mode_2 topology_daes --knn_heads 1 \
   --max_w_model 0.5 \
   --out ./out_ultimate \
@@ -194,13 +194,13 @@ python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model
   --dataset Benthic --train_root ./Benthic --lpi 3 --slice 2 \
   --network R50 --epochs 100 --batch_size 32 \
   --lr 0.05 --wd 0.0005 --momentum 0.9 \
-  --lr_scheduler step --lr_decay_epochs 60 80 --lr_decay_rate 0.2 \
-  --mixup_alpha 1.0 --lsr 0.0 --ema_alpha 0.999 \
-  --k_val 5 --delta 1.0 --history_len 15 \
-  --sim_mode_1 topology_daes --sim_mode_2 topology_daes --knn_heads 1 \
+  --lr_scheduler step --lr_decay_epochs 60 --lr_decay_rate 0.2 \
+  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
+  --k_val 5 --delta 1.0 --history_len 15 --consensus_power 2.0 \
+  --sim_mode_1 topology_daes --sim_mode_2 daes --knn_heads 1 \
   --max_w_model 0.5 \
   --out ./out_ultimate \
-  --exp_name bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model/benthic_lpi3_maxw05_slice2_lsr00_hl15/refactored_e100_seed123 \
+  --exp_name bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model/benthic_lpi3_maxw05_slice2_lsr00_hl15/refactored_e100_seed123_s2daes_e60decay \
   --seeds 1 2 3 --cuda_dev 1
 ### 2.2 Plankton
 ```bash
@@ -209,8 +209,8 @@ python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model
   --network R50 --epochs 100 --batch_size 32 \
   --lr 0.05 --wd 0.0005 --momentum 0.9 \
   --lr_scheduler step --lr_decay_epochs 60 80 --lr_decay_rate 0.2 \
-  --mixup_alpha 1.0 --lsr 0.0 --ema_alpha 0.999 \
-  --k_val 5 --delta 1.0 --history_len 15 \
+  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
+  --k_val 5 --delta 1.0 --history_len 15 --consensus_power 2.0 \
   --sim_mode_1 topology_daes --sim_mode_2 topology_daes --knn_heads 1 \
   --max_w_model 0.5 \
   --out ./out_ultimate \
@@ -225,8 +225,8 @@ python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model
   --network R50 --epochs 100 --batch_size 32 \
   --lr 0.05 --wd 0.0005 --momentum 0.9 \
   --lr_scheduler step --lr_decay_epochs 60 80 --lr_decay_rate 0.2 \
-  --mixup_alpha 1.0 --lsr 0.0 --ema_alpha 0.999 \
-  --k_val 5 --delta 1.0 --history_len 15 \
+  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
+  --k_val 5 --delta 1.0 --history_len 15 --consensus_power 2.0 \
   --sim_mode_1 topology_daes --sim_mode_2 topology_daes --knn_heads 1 \
   --max_w_model 0.5 \
   --out ./out_ultimate \
@@ -234,16 +234,15 @@ python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model
   --seeds 1 2 3
 ```
 python "bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model.py" \
-    --dataset CUB200 \
     --train_root ./data \
     --lpi 10 \
     --pr 0.05 \
     --nr 0.2 \
     --out ./out_ultimate \
-    --exp_name bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model/CUB200/pr0.05nr0.2e250topology_daes_topdaes_hl15_del0.25lsr0.0_123_step \
     --batch_size 64 \
     --lr 0.05 \
     --wd 5e-4 \
+    --consistency_weight 1.0 \
     --seeds 1 2 3 \
     --lsr 0.0 \
     --detailed_log \
@@ -294,12 +293,10 @@ except ImportError:
 import torch.optim as optim
 import wandb
 import sys
-import pandas as pd # CUB200依赖
 import itertools
 import datetime # <--- Added
 from torchvision.models import resnet18, resnet50
 # 假设您的工具函数在以下路径
-from data.dataset import CUB200Partial, CIFAR10Partial, CIFAR100Partial
 from utils.cutout import Cutout
 from utils.autoaugment import CIFAR10Policy ,ImageNetPolicy
 # from utils.prototype_manager import PrototypeManager
@@ -330,118 +327,48 @@ def setup_logger(log_dir, filename="run.log", is_master=False, to_console=False)
     """
     logger_name = f"logger_{log_dir.replace('/', '_')}_{filename}"
     logger = logging.getLogger(logger_name)
-
+    
     if logger.hasHandlers():
         for handler in list(logger.handlers):
             handler.close()
             logger.removeHandler(handler)
-
+            
     logger.setLevel(logging.INFO)
-    logger.propagate = False
-
+    logger.propagate = False 
+    
     formatter = logging.Formatter("%(asctime)s - [%(levelname)s] - %(message)s", "%Y-%m-%d %H:%M:%S")
-
+    
     os.makedirs(log_dir, exist_ok=True)
     log_file = os.path.join(log_dir, filename)
-
+    
     # File Handler (Always active)
     file_handler = logging.FileHandler(log_file, mode='w')
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
-
+    
     # Console Handler (Only active if to_console is True)
     if to_console:
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
-
+        
     return logger
-
-
-def _default_blip2_feature_path(args):
-    dataset_key = args.dataset.lower().replace("cifar", "cifar")
-    if args.dataset == "CIFAR10":
-        return os.path.join(args.blip2_feature_root, "cifar10", "cifar10_blip2_feature_extractor_1.pkl")
-    if args.dataset in ["CIFAR100", "CIFAR100H"]:
-        return os.path.join(args.blip2_feature_root, "cifar100", "cifar100_blip2_feature_extractor_1.pkl")
-    raise ValueError(f"BLIP-2 static features are only configured for CIFAR10/CIFAR100, got {args.dataset}")
-
-
-def _default_blip2_graph_path(args):
-    if args.dataset == "CIFAR10":
-        return os.path.join(args.blip2_graph_root, "cifar10_blip2_faiss_k15_graph.npz")
-    if args.dataset in ["CIFAR100", "CIFAR100H"]:
-        return os.path.join(args.blip2_graph_root, "cifar100_blip2_faiss_k15_graph.npz")
-    raise ValueError(f"BLIP-2 static graph is only configured for CIFAR10/CIFAR100, got {args.dataset}")
-
-
-def load_blip2_static_context(args, device, expected_n, logger):
-    if not args.use_blip2_static_knn:
-        return None
-
-    feature_path = args.blip2_feature_path or _default_blip2_feature_path(args)
-    graph_path = args.blip2_graph_path or _default_blip2_graph_path(args)
-    if not os.path.isfile(feature_path):
-        raise FileNotFoundError(f"BLIP-2 feature file not found: {feature_path}")
-    if not os.path.isfile(graph_path):
-        raise FileNotFoundError(f"BLIP-2 graph file not found: {graph_path}")
-
-    feature_obj = torch.load(feature_path, map_location="cpu")
-    if isinstance(feature_obj, dict) and "features" in feature_obj:
-        features = feature_obj["features"].float()
-    elif torch.is_tensor(feature_obj):
-        features = feature_obj.float()
-    else:
-        raise TypeError(f"Unsupported BLIP-2 feature object type/keys: {type(feature_obj)}")
-    if features.ndim != 2 or features.shape[0] != expected_n:
-        raise RuntimeError(f"BLIP-2 feature shape mismatch: got {tuple(features.shape)}, expected N={expected_n}")
-    features = F.normalize(features.float(), p=2, dim=1).to(device)
-
-    graph = np.load(graph_path)
-    similarities = torch.from_numpy(graph["similarities"].astype("float32", copy=False))
-    neighbors = torch.from_numpy(graph["neighbors"].astype("int64", copy=False))
-    if similarities.shape != neighbors.shape:
-        raise RuntimeError(f"BLIP-2 graph shape mismatch: sims={similarities.shape}, neighbors={neighbors.shape}")
-    if similarities.shape[0] != expected_n:
-        raise RuntimeError(f"BLIP-2 graph N mismatch: got {similarities.shape[0]}, expected {expected_n}")
-    if similarities.shape[1] < args.k_val + 1:
-        raise RuntimeError(f"BLIP-2 graph has K={similarities.shape[1]-1}, but --k_val={args.k_val} needs {args.k_val+1} columns")
-
-    similarities = similarities[:, :args.k_val + 1].clamp_min(0.0).to(device)
-    neighbors = neighbors[:, :args.k_val + 1].to(device)
-    self_ids = torch.arange(expected_n, device=device)
-    self_first = int((neighbors[:, 0] == self_ids).sum().item())
-    self_any = int((neighbors == self_ids.view(-1, 1)).any(dim=1).sum().item())
-    logger.info(
-        f"🔗 [BLIP2] Static feature/KNN mode enabled | "
-        f"features={tuple(features.shape)} | graph={tuple(similarities.shape)} | "
-        f"self_first={self_first}/{expected_n} | self_any={self_any}/{expected_n}"
-    )
-    logger.info(f"🔗 [BLIP2] feature_path={feature_path}")
-    logger.info(f"🔗 [BLIP2] graph_path={graph_path}")
-    return {
-        "features": features,
-        "similarities": similarities,
-        "neighbors": neighbors,
-        "feature_path": feature_path,
-        "graph_path": graph_path,
-    }
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Ultimate Hybrid PALS-SSL Framework with Three-Phase Training')
     # 基本设置
     parser.add_argument('--exp_name', type=str, default='HybridPALS_ThreePhase_Run', help='Experiment name.')
-
+    
     # 在 parse_args() 函数中修改:
-    parser.add_argument('--dataset', type=str, default='CIFAR100',
-                        choices=['CIFAR10', 'CIFAR100', 'CIFAR100H', 'CUB200',
+    parser.add_argument('--dataset', type=str, default='CIFAR100', 
+                        choices=['CIFAR10', 'CIFAR100', 'CIFAR100H', 
                                 'Treeversity', 'Benthic', 'Plankton',])
     parser.add_argument('--train_root', default='./data', help='root for train data')
     parser.add_argument('--out', type=str, default='./out_ultimate', help='Directory for output')
     parser.add_argument('--seeds', type=int, nargs='+', default=[1], help='List of random seeds.')
     parser.add_argument('--num_workers', type=int, default=4, help='num workers')
     parser.add_argument('--cuda_dev', type=int, default=0, help='GPU to select')
-
+    
     # 部分标签 (PLL) 设置
     parser.add_argument('--pr', type=float, default=0.05, help='partial ratio (q)')
     parser.add_argument('--nr', type=float, default=0.5, help='noise ratio (eta)')
@@ -449,7 +376,7 @@ def parse_args():
     parser.add_argument('--slice', type=int, default=1, choices=[1, 2, 3, 4, 5], help='Fold slice index for cross-validation')
     # 核心算法开关
     parser.add_argument('--reliable_selection_mode', type=str, default='pals', choices=['mine', 'pals'], help="Strategy for reliable set selection.")
-
+    
     # 训练超参数
     parser.add_argument('--network', type=str, default='R18', help='Network architecture (R18, R50)')
     parser.add_argument('--epochs', type=int, default=500, help='Total training epochs.')
@@ -462,19 +389,24 @@ def parse_args():
     parser.add_argument('--lr_decay_epochs', type=int, nargs='+', default=[60, 120, 160, 200],
                         help='Epoch milestones for the step learning rate scheduler.')
     parser.add_argument('--lr_decay_rate', type=float, default=0.2,
-                        help='Decay rate (gamma) for the step learning rate scheduler.')
+                        help='Decay rate (gamma) for the step learning rate scheduler.')    
     # 损失函数超参数
     parser.add_argument('--mixup_alpha', type=float, default=1.0, help='Alpha for Mixup.')
     parser.add_argument('--lsr', type=float, default=0.5, help='Label smoothing rate.')
+    parser.add_argument('--consistency_weight', type=float, default=1.0, help='Weight for consistency loss.')
 
     # --- 🚀 消融实验开关 (Ablation Study Flags) ---
     parser.add_argument('--no_reliable_mixup', action='store_true', help='[Ablation] Disable Mixup on reliable set.')
-    parser.add_argument('--ablate_no_cr', action='store_true',
-                        help='[Audit Ablation] Disable active-set weak/strong CR; keep only the strong-view supervised branch, with MixUp preserved when enabled.')
-
+    parser.add_argument('--no_rebalance', action='store_true', help='[Ablation] Disable class rebalancing on pseudo-labels.')
+    parser.add_argument('--no_softmatch', action='store_true', help='[Ablation] Disable SoftMatch weighting (force weight=1.0).')
+    parser.add_argument('--no_unreliable_mixup', action='store_true', help='[Ablation] Disable Mixup on unreliable set (use standard consistency).')
+    
+    # [新增] 完全禁用不可靠集训练
+    parser.add_argument('--no_unreliable_training', action='store_true', help='[Ablation] COMPLETELY ignore unreliable set (Supervised Only).')
+    
     # [新增] 消融:禁用 Middleware Rectification
     parser.add_argument('--no_rectify', action='store_true', help='[Ablation] Disable Middleware Gating/Rectification.')
-
+    
     # [新增] 消融:EMA 因子
     parser.add_argument('--ema_alpha', type=float, default=0.999, help='EMA momentum factor (default: 0.999).')
     # ---------------------------------------------
@@ -482,8 +414,12 @@ def parse_args():
     # KNN & 平衡参数
     parser.add_argument('--k_val', type=int, default=15, help='k for knn')
     parser.add_argument('--delta', type=float, default=0.25, help='example selection quantile')
-
+    
     parser.add_argument('--history_len', type=int, default=15, help='example selection quantile')
+    # --- 🚀 [Added for Ablation Master Control] ---
+    parser.add_argument('--consensus_power', type=float, default=2.0, help='Power for consensus proportion in dynamic weight (default: 2.0)')
+    parser.add_argument('--fix_dynamic_weight', action='store_true', help='[Ablation] Fix dynamic consistency weight to 1.0 (Disable curriculum)')
+    # ----------------------------------------------
 # --- 修改部分开始 ---
     parser.add_argument('--sim_mode_1', type=str, default='topology',  # <--- 修改默认值为 topology
                         choices=['topology', 'exp', 'daes', 'none','topology_daes'],   # <--- 确保包含所有选项
@@ -491,7 +427,7 @@ def parse_args():
 
     parser.add_argument('--sim_mode_2', type=str, default='daes',      # <--- 第二阶段通常用 daes 或 topology
                         choices=['topology', 'exp', 'daes', 'none', 'topology_daes'],   # <--- 确保包含所有选项
-                        help='Similarity measure for Stage 2')
+                        help='Similarity measure for Stage 2')   
 
     # [Topology] 信誉度核:让 topology 在 one-hot 标签下也能工作
     parser.add_argument('--topology_rel_mode', type=str, default='masked_entropy',
@@ -507,49 +443,39 @@ def parse_args():
     # 日志
     parser.add_argument('--detailed_log', action='store_true', help='Enable detailed diagnostic logging.')
     # 1. Teacher Gating 控制 (干预机制)
-    parser.add_argument('--gating_start_ratio', type=float, default=0.2,
+    parser.add_argument('--gating_start_ratio', type=float, default=0.2, 
                         help='[Gating] Ratio of epochs before teacher gating starts (default: 0.2, means start at 20%% epoch).')
-    parser.add_argument('--gating_max_alpha', type=float, default=1.0,
+    parser.add_argument('--gating_max_alpha', type=float, default=1.0, 
                         help='[Gating] Max influence of teacher (0.0 to 1.0). Set <1.0 to always keep some geometry signal.')
 
     # 2. DAES 算法控制 (拓扑构建)
-    parser.add_argument('--daes_clamp', type=float, default=0.25,
+    parser.add_argument('--daes_clamp', type=float, default=0.25, 
                         help='[DAES] Max temperature clamp (Anti-oversmoothing lock). Lower is sharper.')
-    parser.add_argument('--daes_entropy_weight', type=float, default=0.2,
+    parser.add_argument('--daes_entropy_weight', type=float, default=0.2, 
                         help='[DAES] Sensitivity to local entropy (tau = base + weight * H).')
-    parser.add_argument('--daes_sharpening_power', type=float, default=2.0,
-                        help='[DAES] Sharpening power for local mean calculation (CUB=2.0, Standard=1.0).')
-
+    parser.add_argument('--daes_sharpening_power', type=float, default=2.0, 
+                        help='[DAES] Sharpening power for local mean calculation (default=1.0).')
+    
     # [新增] DAES 参数化控制
-    parser.add_argument('--daes_spatial_temp', type=float, default=0.5,
+    parser.add_argument('--daes_spatial_temp', type=float, default=0.5, 
                         help='[DAES] Temperature for spatial weighting (default: 0.5).')
-    parser.add_argument('--daes_base_tau', type=float, default=0.1,
+    parser.add_argument('--daes_base_tau', type=float, default=0.1, 
                         help='[DAES] Base temperature for affinity matrix (default: 0.1).')
-    parser.add_argument('--daes_entropy_coeff', type=float, default=0.5,
+    parser.add_argument('--daes_entropy_coeff', type=float, default=0.5, 
                         help='[DAES] Coefficient for entropy-based temperature adjustment (default: 0.5).')
-    parser.add_argument('--daes_sim_power', type=float, default=2.0,
+    parser.add_argument('--daes_sim_power', type=float, default=2.0, 
                         help='[DAES] Power to raise similarity to (default: 2.0).')
-
+    
     # [新增] 拓扑参考模式
     parser.add_argument('--daes_topology_ref_mode', type=str, default='hard', choices=['gated', 'hard'],
                         help='[DAES] Topology reference mode: "gated" (use teacher confidence gated signal) or "hard" (use raw hard signal).')
 
     # 3. KNN 图构建
-    parser.add_argument('--knn_heads', type=int, default=4,
+    parser.add_argument('--knn_heads', type=int, default=4, 
                         help='[KNN] Number of  heads for metric learning (Robustness).')
-    parser.add_argument('--use_blip2_static_knn', action='store_true',
-                        help='Use pre-extracted BLIP-2 train features and a saved FAISS graph for KNN/prototype.')
-    parser.add_argument('--blip2_feature_root', type=str, default='./plrc_preextracted_features/blip2_features',
-                        help='Root containing cifar10/cifar100 BLIP-2 feature .pkl files.')
-    parser.add_argument('--blip2_graph_root', type=str, default='./plrc_preextracted_features/NSE提取监督信息测试',
-                        help='Root containing BLIP-2 FAISS graph .npz files.')
-    parser.add_argument('--blip2_feature_path', type=str, default='',
-                        help='Explicit BLIP-2 feature .pkl path. Overrides --blip2_feature_root.')
-    parser.add_argument('--blip2_graph_path', type=str, default='',
-                        help='Explicit BLIP-2 graph .npz path. Overrides --blip2_graph_root.')
-
+    
     # 🚀 新增: 双源KNN交集筛选参数
-
+    
     # 🚀 新增: 动态全可靠集训练参数
     # 在 parse_args() 函数的 "核心算法开关" 或 "消融实验" 部分加入:
 
@@ -557,8 +483,8 @@ def parse_args():
     # [新增] 消融:禁用一致性正则化
     parser.add_argument('--enable_knn1_model_fuse', action='store_true',
                         help='[EXP9] Enable model-geometry fusion with KNN1 scores before candidate projection.')
-
-    parser.add_argument('--fusion_mode', type=str, default='weighted_sum',
+    
+    parser.add_argument('--fusion_mode', type=str, default='weighted_sum', 
                         choices=['geometric', 'weighted_sum'],
                         help='Fusion mode for model prediction and KNN scores (default: weighted_sum)')
 
@@ -590,6 +516,16 @@ def parse_args():
                              'candidate-set true-label info guides KNN (natural curriculum).\n'
                              '  model_over_knn: ce=-∑ p_model*log(p_knn2). '
                              'Early: measures KNN entropy, rewards already-sharp KNN distributions.')
+    parser.add_argument('--ablate_uniform_ri', action='store_true',
+                        help='[Ablation] Replace sample-wise r_i with a constant 0.5 gate.')
+    parser.add_argument('--ablate_no_candidate_prior', action='store_true',
+                        help='[Ablation] Do not constrain model evidence by omega/static candidate prior.')
+    parser.add_argument('--ri_mode', type=str, default='entropy_prior',
+                        choices=['confidence', 'entropy_prior', 'uniform'],
+                        help='Reliability/prior gate for Bayes fusion. '
+                             'confidence keeps the old max-probability ratio; '
+                             'entropy_prior uses entropy confidence, KNN/model agreement, '
+                             'and an adaptive candidate-prior gate; uniform uses r_i=0.5.')
 
     # ===========================================================================
     # [新增 / New] 渐进融合(Progressive Fusion)预热参数
@@ -598,19 +534,21 @@ def parse_args():
     # 修改内容: 新增 model_warmup_epochs 参数，控制模型预测权重的预热轮数
     # Modified: Added model_warmup_epochs to control w_model warmup schedule.
     # ===========================================================================
-    parser.add_argument('--model_warmup_epochs', type=int, default=10,
+    parser.add_argument('--model_warmup_epochs', type=int, default=20,
                         help='[ProgFuse] Number of warmup epochs for model prediction weight. '
-                             'w_model = max_w_model * min(1.0, epoch / model_warmup_epochs). '
-                             'At epoch 0, w_model=0 -> p_model_effective = p_knn1 (pure first-pass KNN). '
-                             'At epoch >= model_warmup_epochs, w_model=max_w_model -> capped model/KNN mixture.')
+                             'w_model = min(1.0, epoch / model_warmup_epochs). '
+                             'At epoch 0, w_model=0 -> p_model_effective = p_knn2 (pure KNN). '
+                             'At epoch >= model_warmup_epochs, w_model=1 -> p_model_effective = p_model.')
     # [恢复] max_w_model 参数 / Restored max_w_model parameter
     parser.add_argument('--max_w_model', type=float, default=1.0,
                         help='Maximum value for w_model (default: 1.0). Set 0.5 to cap model influence.')
+    parser.add_argument('--disable_salvage_training', action='store_true',
+                        help='[Ablation] Log tri-consensus salvage but do not promote salvaged samples to the training pool.')
 
     # ===========================================================================
     # [新增 / New] 自适应连续传播深度控制参数
     # [MODIFIED - gitdiffer]
-    # <<<<<<< BASE:
+    # <<<<<<< BASE: 
     # =======
     parser.add_argument("--adaptive_prop_depth", action="store_true",
                         help="[AdapDepth] Automatically truncate propagation (skip Stage 3) if over-sharpening is detected (high consensus but low reliable volume).")
@@ -632,7 +570,7 @@ class PrototypeManager:
         self.feature_dim = feature_dim
         self.ema_alpha = ema_alpha
         self.device = device
-
+        
         # 初始化原型 (N_class, Dim)
         self.prototypes = torch.zeros(num_classes, feature_dim, device=device)
         self.is_initialized = False
@@ -647,26 +585,26 @@ class PrototypeManager:
         features = features.detach()
         # 确保特征归一化 (配合余弦相似度)
         features = F.normalize(features, dim=1)
-
+        
         # 筛选可靠样本
         rel_feats = features[reliable_mask]
         rel_targets = reliable_labels[reliable_mask]
-
+        
         if len(rel_feats) == 0:
             return
 
         # 计算当前 Batch/Epoch 的新类中心
         new_protos = torch.zeros_like(self.prototypes)
-
+        
         # 这种写法比循环快
         # Numerator: Sum features per class
         # Denominator: Count per class
         one_hot = F.one_hot(rel_targets.long(), self.num_classes).float() # [N_rel, C]
-
+        
         # [C, N_rel] @ [N_rel, Dim] -> [C, Dim]
-        sum_features = torch.mm(one_hot.T, rel_feats)
+        sum_features = torch.mm(one_hot.T, rel_feats) 
         counts = one_hot.sum(dim=0).unsqueeze(1) + 1e-8
-
+        
         current_means = sum_features / counts
         current_means = F.normalize(current_means, dim=1) # 再次归一化
 
@@ -678,19 +616,19 @@ class PrototypeManager:
             # 只有当前 batch 出现过的类别才更新，没出现的保持原样
             # mask: [C, 1]
             active_classes = (one_hot.sum(dim=0).unsqueeze(1) > 0).float()
-
+            
             updated_protos = self.ema_alpha * self.prototypes + (1 - self.ema_alpha) * current_means
-
+            
             # 组合：活跃类用更新的，不活跃类用旧的
             self.prototypes = active_classes * updated_protos + (1 - active_classes) * self.prototypes
-
+            
         # 保持原型在单位球面上
         self.prototypes = F.normalize(self.prototypes, dim=1)
 
     def predict(self, query_features):
         """
         基于余弦相似度进行预测
-        return:
+        return: 
             sims: [N, C] 相似度分数
             preds: [N] 预测类别
         """
@@ -712,38 +650,12 @@ def get_pals_transforms(dataset_name):
     elif dataset_name == 'Plankton':
         mean = [0.9663359216202008, 0.9663359216202008, 0.9663359216202008]
         std = [0.10069729102981237, 0.10069729102981237, 0.10069729102981237]
-    elif dataset_name == 'CUB200':
-        mean, std = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
     else: # 默认为 CIFAR
         mean, std = ([0.5071, 0.4867, 0.4408], [0.2675, 0.2565, 0.2761]) if '100' in dataset_name else ([0.4914, 0.4822, 0.4465], [0.2023, 0.1994, 0.2010])
 
     # --- (修改) 扩展 Transform 逻辑 ---
-
-    # (新增) CUB200 (使用 PALS 原始的强 Aug)
-    if dataset_name == 'CUB200':
-        weak_transform = transforms.Compose([
-            transforms.RandomResizedCrop(224, scale=(0.2, 1.0)),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            transforms.Normalize(mean, std)
-        ])
-        strong_transform = transforms.Compose([
-            transforms.RandomResizedCrop(224, scale=(0.2, 1.0)),
-            transforms.RandomHorizontalFlip(),
-            # CIFAR10Policy(),
-            ImageNetPolicy(),
-            transforms.ToTensor(),
-            Cutout(n_holes=1, length=56), # <-- 关键！
-            transforms.Normalize(mean, std)
-        ])
-        test_transform = transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            transforms.Normalize(mean, std)
-        ])
-
-    elif dataset_name == 'Treeversity':
+    
+    if dataset_name == 'Treeversity':
         weak_transform = transforms.Compose([
             transforms.RandomHorizontalFlip(),
             transforms.RandomResizedCrop(224),
@@ -827,13 +739,13 @@ def get_pals_transforms(dataset_name):
             transforms.Normalize(mean, std),
         ])
     # 包含您截图中的所有新数据集
-    if dataset_name in ['Turkey', 'Pig', 'MiceBone', 'QualityMRI', 'Synthetic',
+    if dataset_name in ['Turkey', 'Pig', 'MiceBone', 'QualityMRI', 'Synthetic', 
                         'verse_blended-vps', 'verse_mask1-vps', 'CIFAR10H']:
-
+        
         # 使用 ImageNet 统计数据作为通用初始化
         mean = [0.485, 0.456, 0.406]
         std = [0.229, 0.224, 0.225]
-
+        
         # 如果是 CIFAR10H,可能图片很小 (32x32),需要特殊处理
         if 'CIFAR' in dataset_name or 'Synthetic' in dataset_name:
             resize_size = 32
@@ -849,7 +761,7 @@ def get_pals_transforms(dataset_name):
             transforms.ToTensor(),
             transforms.Normalize(mean, std)
         ])
-
+        
         strong_transform = transforms.Compose([
             transforms.RandomResizedCrop(crop_size, scale=(0.2, 1.0)),
             transforms.RandomHorizontalFlip(),
@@ -857,7 +769,7 @@ def get_pals_transforms(dataset_name):
             transforms.ToTensor(),
             transforms.Normalize(mean, std)
         ])
-
+        
         test_transform = transforms.Compose([
             transforms.Resize(resize_size),
             transforms.CenterCrop(crop_size),
@@ -866,24 +778,24 @@ def get_pals_transforms(dataset_name):
         ])
     return weak_transform, strong_transform, test_transform
 def get_base_encoder(network_name, dataset_name):
-
-
+    
+    
     # --- (修改) 扩展使用预训练权重的条件 ---
-    # use_pretrained = dataset_name in ['CUB200', 'Treeversity', 'Benthic', 'Plankton','Synthetic',]
-    use_pretrained = dataset_name in ['CUB200', 'Treeversity', 'Benthic', 'Plankton',]
-
+    # use_pretrained = dataset_name in ['Treeversity', 'Benthic', 'Plankton','Synthetic',]
+    use_pretrained = dataset_name in ['Treeversity', 'Benthic', 'Plankton']
+    
     if network_name == 'R50':
         base_model = resnet50(weights='IMAGENET1K_V1' if use_pretrained else None)
     else: # Default to R18
         base_model = resnet18(weights='IMAGENET1K_V1' if use_pretrained else None)
 
     feature_dim = base_model.fc.in_features
-
+    
     # if 'CIFAR' in dataset_name:
     if 'CIFAR' in dataset_name or 'Synthetic' in dataset_name:
         base_model.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
         base_model.maxpool = nn.Identity()
-
+        
     encoder = nn.Sequential(*list(base_model.children())[:-1], nn.Flatten())
     return encoder, feature_dim
 
@@ -895,33 +807,23 @@ def get_base_encoder(network_name, dataset_name):
 
 
 class FeatureExtractionDataset(Dataset):
-    def __init__(self, base_dataset, weak_t, strong_t):
+    def __init__(self, base_dataset, weak_t, strong_t): 
         self.base_dataset = base_dataset
         self.weak_t = weak_t
         self.strong_t = strong_t
-
+        
         # --- (修改) ---
-        # 我们需要明确区分 CUB200 和 Crowdsource
-        self.is_cub = isinstance(self.base_dataset, CUB200Partial)
         self.is_crowd = isinstance(self.base_dataset, Crowdsource)
         # --- (修改结束) ---
 
-    def __len__(self):
+    def __len__(self): 
         return len(self.base_dataset)
-
+        
     def __getitem__(self, index):
         # 1. 获取原始图像
-
+        
         # --- (修改) ---
-        if self.is_cub:
-            # CUB200: .data 是 DataFrame. 必须用 .data_paths
-            img_path = os.path.join(self.base_dataset.root,
-                                    self.base_dataset.base_folder,
-                                    'images',
-                                    self.base_dataset.data_paths[index])
-            img = Image.open(img_path).convert('RGB')
-
-        elif self.is_crowd:
+        if self.is_crowd:
             # Crowdsource: .data 是 'list' of paths, 可以直接用 [index]
             img_path = self.base_dataset.data[index]
             img = Image.open(img_path).convert('RGB')
@@ -944,22 +846,18 @@ class ImageOnlyDataset(Dataset):
         self.base_dataset = base_dataset
         self.weak_t = weak_t
         self.strong_t = strong_t
-        self.is_cub = isinstance(self.base_dataset, CUB200Partial)
         self.is_crowd = isinstance(self.base_dataset, Crowdsource)
         self.index_map = list(range(len(base_dataset))) if index_map is None else list(index_map)
-
+        
     def __len__(self):
         return len(self.index_map)
 
     def update_index_map(self, new_index_map):
         self.index_map = list(new_index_map)
-
+        
     def __getitem__(self, idx):
         original_idx = self.index_map[idx]
-        if self.is_cub:
-            img_path = os.path.join(self.base_dataset.root, self.base_dataset.base_folder, 'images', self.base_dataset.data_paths[original_idx])
-            img = Image.open(img_path).convert('RGB')
-        elif self.is_crowd:
+        if self.is_crowd:
             img_path = self.base_dataset.data[original_idx]
             img = Image.open(img_path).convert('RGB')
         else:
@@ -987,7 +885,7 @@ class UnifiedSSLDataset(Dataset):
     def __init__(self, base_dataset, data_list, weak_t, strong_t):
         """
         Args:
-            base_dataset: 原始数据集 (CIFAR/CUB/Crowdsource)
+            base_dataset: 原始数据集 (CIFAR/Crowdsource)
             data_list: [(idx, label, is_reliable), ...]
                 - idx: 原始索引
                 - label: 伪标签（可靠集）或 -1（不可靠集）
@@ -999,30 +897,23 @@ class UnifiedSSLDataset(Dataset):
         self.data_list = data_list
         self.weak_t = weak_t
         self.strong_t = strong_t
-
+        
         # 检测数据集类型
-        self.is_cub = isinstance(self.base_dataset, CUB200Partial)
         self.is_crowd = isinstance(self.base_dataset, Crowdsource)
-
+    
     def __len__(self):
         return len(self.data_list)
-
+    
     def __getitem__(self, idx):
         original_idx, label, is_reliable = self.data_list[idx]
-
+        
         # 获取原始图像
-        if self.is_cub:
-            img_path = os.path.join(self.base_dataset.root,
-                                    self.base_dataset.base_folder,
-                                    'images',
-                                    self.base_dataset.data_paths[original_idx])
-            img = Image.open(img_path).convert('RGB')
-        elif self.is_crowd:
+        if self.is_crowd:
             img_path = self.base_dataset.data[original_idx]
             img = Image.open(img_path).convert('RGB')
         else:  # CIFAR
             img = Image.fromarray(self.base_dataset.data[original_idx])
-
+        
         return (self.weak_t(img), self.strong_t(img),
                 label, is_reliable, original_idx)
 
@@ -1032,28 +923,28 @@ class TemporalStateManager:
         self.N, self.C = num_samples, num_classes
         self.max_epochs = max_epochs
         self.history_len = history_len
-        self.use_disambiguation = use_disambiguation
+        self.use_disambiguation = use_disambiguation 
         # 🚀 三方队列共识硬标签快照队列
         # 存储格式:达成三方共识存入 Label(0-99),未达成存入 -1
         self.tri_consensus_history = deque(maxlen=history_len)
-
+        
         # 为了判断 "始终不可靠",保留可靠性历史
         self.is_reliable_history = deque(maxlen=history_len)
         # 队列维护:记录每个样本的可靠性状态
         # self.is_reliable_history = deque(maxlen=history_len)
-
+        
         # 记录 1: 剪枝后的 KNN 标签 (Topology-KNN)
         self.pruned_pl_history = deque(maxlen=history_len)
-
+        
         # 记录 2: 基于模型预测的几何标签 (Model-KNN)
         self.geo_pl_history = deque(maxlen=history_len)
-
+        
         # 🚀 记录 3: [新增] 基于类原型的预测标签 (Proto-PL)
         self.proto_pl_history = deque(maxlen=history_len)
-
+        
         # 消歧参考:模型历史预测分布的移动平均 (EMA)
         self.prob_ema = torch.ones(num_samples, num_classes) / num_classes
-        self.ema_m = 0.995
+        self.ema_m = 0.995 
 
     def update_ema(self, current_model_probs):
         """使用模型预测更新 EMA"""
@@ -1061,7 +952,7 @@ class TemporalStateManager:
 
     def update_history(self, is_reliable_mask, pruned_pl, geo_pl=None, proto_pl=None):
         """
-        存入历史轨迹
+        存入历史轨迹 
         Args:
             is_reliable_mask: 当前 epoch 是否被选为可靠
             pruned_pl: Phase 2 产生的 KNN 伪标签
@@ -1070,7 +961,7 @@ class TemporalStateManager:
         """
         self.is_reliable_history.append(is_reliable_mask.cpu().bool())
         self.pruned_pl_history.append(pruned_pl.cpu().long())
-
+        
         if geo_pl is not None:
             self.geo_pl_history.append(geo_pl.cpu().long())
         else:
@@ -1085,7 +976,7 @@ class TemporalStateManager:
     def get_dynamic_disambiguation(self, epoch, device):
         if not self.use_disambiguation or epoch == 0:
             return torch.ones(self.N, self.C).to(device)
-
+            
         alpha = (epoch / self.max_epochs) ** 2
         D = torch.pow(self.prob_ema + 1e-12, alpha)
         return D.to(device)
@@ -1101,7 +992,7 @@ class TemporalStateManager:
             return None, None, None, None
 
         # 2. Stack History
-        rel_stack = torch.stack(list(self.is_reliable_history))
+        rel_stack = torch.stack(list(self.is_reliable_history)) 
         pl_stack = torch.stack(list(self.pruned_pl_history))
 
         # 3. Calculate Metrics
@@ -1251,11 +1142,11 @@ def get_topology_guided_affinity(raw_D, neighbors_indices, current_soft_labels, 
         raise ValueError(f"Unknown rel_mode: {rel_mode}")
 
     gamma = float(gamma)
-    reliability_scores = torch.exp(-gamma * (norm_score ** 2))
+    reliability_scores = torch.exp(-gamma * (norm_score ** 2)) 
 
     # --- Step 3: 生成最终亲和矩阵 (始终使用完整 [N, K+1] 矩阵) ---
     # Final affinity matrix always uses the full [N, K+1] matrix.
-    reliability_scores_expanded = reliability_scores.unsqueeze(1)
+    reliability_scores_expanded = reliability_scores.unsqueeze(1) 
     all_reliabilities = F.embedding(neighbors_indices, reliability_scores_expanded).squeeze(-1)
     refined_sim = raw_D * all_reliabilities
 
@@ -1283,7 +1174,7 @@ def get_topology_daes_affinity(raw_D, neighbors_indices, current_soft_labels, ar
 
     p_self = current_soft_labels / (current_soft_labels.sum(dim=1, keepdim=True) + eps)
     rel_mode = getattr(args, 'topology_rel_mode', 'masked_entropy')
-
+    
     if rel_mode == 'masked_entropy':
         masked_scores = p_knn * p_self
         masked_prob = masked_scores / (masked_scores.sum(dim=1, keepdim=True) + eps)
@@ -1325,15 +1216,15 @@ def get_topology_daes_affinity(raw_D, neighbors_indices, current_soft_labels, ar
     base_tau = getattr(args, 'daes_base_tau', 0.1)
     entropy_coeff = getattr(args, 'daes_entropy_coeff', 0.5)
     sim_power = getattr(args, 'daes_sim_power', 2.0)
-
+    
     # [修改点] 移除切片，直接使用完整矩阵评估邻域熵
     spatial_weights = F.softmax(raw_D / att_temp, dim=1).unsqueeze(-1)
     neighbor_labels = F.embedding(neighbors_indices, current_soft_labels)
-
+    
     local_mean = (neighbor_labels * spatial_weights).sum(dim=1)
     local_entropy = -torch.sum(local_mean * torch.log(local_mean + eps), dim=1)
     norm_entropy = local_entropy / np.log(num_classes)
-
+    
     tau_dynamic = (base_tau + (torch.pow(norm_entropy, 2) * entropy_coeff)).unsqueeze(1)
 
     # 第三阶段：融合（始终使用完整矩阵）
@@ -1341,10 +1232,10 @@ def get_topology_daes_affinity(raw_D, neighbors_indices, current_soft_labels, ar
     scaled_sim = torch.pow(raw_D, sim_power) / tau_dynamic
     max_val, _ = scaled_sim.max(dim=1, keepdim=True)
     daes_weights = torch.exp(scaled_sim - max_val.detach())
-
+    
     neighbor_reliabilities = F.embedding(neighbors_indices, reliability_scores.unsqueeze(1)).squeeze(-1)
     final_neighbor_weights = daes_weights * neighbor_reliabilities
-
+    
     return final_neighbor_weights
 
 
@@ -1472,8 +1363,6 @@ def reliable_pseudolabel_selection_advanced(logger, args, device, trainloader, f
 
     if _is_crowd:
         logger.info("✨ [Refine Branch] Crowdsource dataset enters unified Bayesian evidential fusion path")
-    elif _dataset_name == 'CUB200':
-        logger.info("✨ [Refine Branch] CUB200 enters unified Bayesian evidential fusion path")
     else:
         logger.info("✨ [Refine Branch] CIFAR dataset enters unified Bayesian evidential fusion path")
 
@@ -1516,7 +1405,7 @@ def reliable_pseudolabel_selection_advanced(logger, args, device, trainloader, f
 
     omega = crowd_prior if crowd_prior is not None else static_cand_mask.float()
     force_topology_only = bool(getattr(args, 'force_old_branch', False))
-    if force_topology_only and _dataset_name in ['Treeversity', 'Benthic', 'Plankton', 'CUB200']:
+    if force_topology_only and _dataset_name in ['Treeversity', 'Benthic', 'Plankton']:
         r_i = torch.ones_like(r_i)
         logger.info(f"✨ [Refine Branch] force_old_branch=True -> r_i forced to 1.0 for {_dataset_name}")
 
@@ -1926,7 +1815,7 @@ def run_single_experiment(args):
     args.seed_dataset = args.seed
 
     # 3. 数据加载与预处理
-    num_classes_map = {'CIFAR10': 10, 'CIFAR100': 100, 'CIFAR100H': 100, 'CUB200': 200, 'Treeversity': 6, 'Benthic': 8, 'Plankton': 10, 'Synthetic': 6}
+    num_classes_map = {'CIFAR10': 10, 'CIFAR100': 100, 'CIFAR100H': 100, 'Treeversity': 6, 'Benthic': 8, 'Plankton': 10, 'Synthetic': 6}
     num_classes = num_classes_map[args.dataset]
     args.num_classes = num_classes
 
@@ -1951,11 +1840,6 @@ def run_single_experiment(args):
 
         TestClass = datasets.CIFAR100 if '100' in args.dataset else datasets.CIFAR10
         test_ds = TestClass(root=args.train_root, train=False, download=True, transform=test_t)
-
-    elif args.dataset == 'CUB200':
-        base_train_ds = CUB200Partial(args, train=True, transform=None)
-        base_train_ds.partial_noise(args.pr, args.nr)
-        test_ds = CUB200Partial(args, train=False, transform=test_t)
 
     elif args.dataset in ['Treeversity', 'Benthic', 'Plankton']:
         crowd_root_map = {'Benthic': './Benthic', 'Plankton': './Plankton', 'Treeversity': './Treeversity'}
@@ -2006,7 +1890,7 @@ def run_single_experiment(args):
     state_manager = TemporalStateManager(len(base_train_ds), num_classes, total_epochs, history_len=args.history_len, use_disambiguation=True)
 
         # 差异化学习率策略 (Fine-tuning 范式)
-    # if args.dataset in ['CUB200', 'Treeversity', 'Benthic', 'Plankton']:
+    # if args.dataset in ['Treeversity', 'Benthic', 'Plankton']:
     if args.dataset in [ 'Treeversity', 'Benthic', 'Plankton']:
         # 预训练骨干网络使用较小的学习率 (通常为基础 LR 的 0.1 或 0.01)
         encoder_lr = args.lr * 0.01
@@ -2275,3 +2159,4 @@ Modifications / 修改内容:
     - [EN] Added --adaptive_prop_depth and --expected_rel_ratio to dynamically skip Stage 3 if over-sharpening (high consensus, low reliability volume) is detected.
     - [ZH] 新增自适应截断机制。当共识度高（候选集命中率高）但可靠集数量太少时，跳过第三次传播以防类塌陷。
 """
+

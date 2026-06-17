@@ -2,8 +2,8 @@
 
 This release package intentionally excludes dataset binaries, extracted image
 folders, generated feature caches, checkpoints, and training outputs. Keep the
-dataset loader source files under `data/*.py`, and place the actual data under
-the runtime roots described below.
+dataset loader source files under `reproducibility/code/data/*.py`, and place
+the actual data under the runtime roots described below.
 
 ## Required runtime layout
 
@@ -65,11 +65,3 @@ Use the Benthic, Plankton, and Treeversity subsets from the DCIC release.
 The loaders expect each dataset root to contain `annotations.json` and fold
 subdirectories. The paper commands use `slice=2` and the same fold convention
 as the local loaders.
-
-## Optional CUB-200-2011
-
-- Official dataset page:
-  https://www.vision.caltech.edu/datasets/cub_200_2011/
-
-CUB is only needed for optional scripts that explicitly request `--dataset
-CUB200`.
