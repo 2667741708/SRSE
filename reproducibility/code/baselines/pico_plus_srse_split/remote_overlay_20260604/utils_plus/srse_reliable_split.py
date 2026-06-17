@@ -36,14 +36,14 @@ def _topology_daes_weights(raw_d, neighbors, current_soft_labels, args):
     p_knn = _normalize_rows(p_knn, eps)
 
     p_self = labels
-    rel_mode = getattr(args, 'nse_topology_rel_mode', 'masked_entropy')
+    rel_mode = getattr(args, 'srse_topology_rel_mode', 'masked_entropy')
     if rel_mode == 'masked_entropy':
         masked_scores = p_knn * p_self
         masked_prob = _normalize_rows(masked_scores, eps)
         norm_score = -(masked_prob.clamp_min(eps) * masked_prob.clamp_min(eps).log()).sum(dim=1)
         norm_score = norm_score / (math.log(num_classes) + eps)
     elif rel_mode == 'kl':
-        kl_self_mode = getattr(args, 'nse_kl_self_mode', 'with_self')
+        kl_self_mode = getattr(args, 'srse_kl_self_mode', 'with_self')
         if kl_self_mode == 'no_self' and neighbors.shape[1] > 1:
             nei_d = raw_d[:, 1:]
             nei_idx = neighbors[:, 1:]
@@ -59,18 +59,18 @@ def _topology_daes_weights(raw_d, neighbors, current_soft_labels, args):
         agree_mass = (p_knn * p_self).sum(dim=1).clamp(min=eps, max=1.0)
         norm_score = -agree_mass.log() / (math.log(num_classes) + eps)
     else:
-        raise ValueError('Unknown nse_topology_rel_mode: {}'.format(rel_mode))
+        raise ValueError('Unknown srse_topology_rel_mode: {}'.format(rel_mode))
 
-    gamma = float(getattr(args, 'nse_topology_rel_gamma', 2.0))
+    gamma = float(getattr(args, 'srse_topology_rel_gamma', 2.0))
     reliability_scores = torch.exp(-gamma * (norm_score ** 2))
 
-    att_temp = float(getattr(args, 'nse_daes_spatial_temp', 0.5))
-    base_tau = float(getattr(args, 'nse_daes_base_tau', 0.1))
+    att_temp = float(getattr(args, 'srse_daes_spatial_temp', 0.5))
+    base_tau = float(getattr(args, 'srse_daes_base_tau', 0.1))
     entropy_coeff = float(getattr(
-        args, 'nse_daes_entropy_coeff',
-        getattr(args, 'nse_entropy_coeff', 0.5),
+        args, 'srse_daes_entropy_coeff',
+        getattr(args, 'srse_entropy_coeff', 0.5),
     ))
-    sim_power = float(getattr(args, 'nse_daes_sim_power', 2.0))
+    sim_power = float(getattr(args, 'srse_daes_sim_power', 2.0))
 
     spatial_weights = F.softmax(raw_d / att_temp, dim=1).unsqueeze(-1)
     local_mean = (neighbor_labels * spatial_weights).sum(dim=1)
@@ -101,7 +101,7 @@ def _filter_by_candidate_quantile(scores, source_prior, args):
 
     is_rel = torch.zeros(scores.shape[0], dtype=torch.bool, device=scores.device)
     counts = torch.bincount(max_idx[in_source], minlength=int(args.num_class)).float()
-    limit = torch.quantile(counts, float(getattr(args, 'nse_delta', 0.25))) if counts.numel() else torch.tensor(0.0, device=scores.device)
+    limit = torch.quantile(counts, float(getattr(args, 'srse_delta', 0.25))) if counts.numel() else torch.tensor(0.0, device=scores.device)
 
     for c in range(int(args.num_class)):
         idx_c = torch.where(in_source & (max_idx == c))[0]
@@ -121,7 +121,7 @@ def _filter_by_candidate_quantile(scores, source_prior, args):
 
 
 @torch.no_grad()
-def nse_reliable_set_selection(args, epoch, sel_stats, train_givenY):
+def srse_reliable_set_selection(args, epoch, sel_stats, train_givenY):
     """Replace only PiCO+'s prototype-distance clean/noisy split.
 
     The selector mirrors the SRSE topology-DAES reliable-set path:
@@ -132,7 +132,7 @@ def nse_reliable_set_selection(args, epoch, sel_stats, train_givenY):
     """
     device = sel_stats['is_rel'].device
     seen = sel_stats.get('seen', torch.ones_like(sel_stats['is_rel'])).bool()
-    if seen.sum() < max(2, int(args.nse_k) + 1):
+    if seen.sum() < max(2, int(args.srse_k) + 1):
         print('[SRSESplit] not enough stored features; keeping all samples reliable')
         sel_stats['is_rel'] = torch.ones_like(sel_stats['is_rel']).bool()
         return
@@ -142,16 +142,16 @@ def nse_reliable_set_selection(args, epoch, sel_stats, train_givenY):
     source_prior = _normalize_rows(source_prior)
     raw_d, neighbors = _chunked_knn(
         features,
-        int(getattr(args, 'nse_k', 15)),
-        int(getattr(args, 'nse_chunk_size', 1024)),
+        int(getattr(args, 'srse_k', 15)),
+        int(getattr(args, 'srse_chunk_size', 1024)),
     )
 
     stage1 = _propagate_topology_daes(raw_d, neighbors, source_prior, args)
 
     model_probs = _normalize_rows(sel_stats['model_probs'].to(device))
     if model_probs.sum() > 0:
-        warmup = max(float(getattr(args, 'nse_model_warmup_epochs', 10.0)), 1.0)
-        max_w_model = float(getattr(args, 'nse_model_weight', 0.5))
+        warmup = max(float(getattr(args, 'srse_model_warmup_epochs', 10.0)), 1.0)
+        max_w_model = float(getattr(args, 'srse_model_weight', 0.5))
         w_model = max_w_model * min(1.0, float(epoch) / warmup)
         p_model_effective = w_model * model_probs + (1.0 - w_model) * stage1.detach()
         conf_knn = stage1.max(dim=1, keepdim=True)[0]

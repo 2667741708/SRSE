@@ -25,7 +25,7 @@ from utils_plus.utils_algo import *
 from utils_plus.utils_loss import partial_loss, SupConLoss, ce_loss
 from utils_plus.cifar10 import load_cifar10
 from utils_plus.cifar100 import load_cifar100
-from utils_plus.nse_reliable_split import nse_reliable_set_selection
+from utils_plus.srse_reliable_split import srse_reliable_set_selection
 import copy
 
 torch.autograd.set_detect_anomaly(True)
@@ -119,35 +119,35 @@ parser.add_argument('--ur_weight', default='0.1', type=float,
 parser.add_argument('--cls_weight', default=2, type=float,
                     help='weights for the losses of mixup loss')
 parser.add_argument('--split_mode', default='prototype', type=str,
-                    choices=['prototype', 'nse_topology', 'nse_topology_daes'],
-                    help='PiCO+ clean/noisy split. prototype is official PiCO+; nse_topology_daes replaces only the split with the SRSE source-anchored topology-DAES selector.')
-parser.add_argument('--nse_k', default=15, type=int,
+                    choices=['prototype', 'srse_topology', 'srse_topology_daes'],
+                    help='PiCO+ clean/noisy split. prototype is official PiCO+; srse_topology_daes replaces only the split with the SRSE source-anchored topology-DAES selector.')
+parser.add_argument('--srse_k', default=15, type=int,
                     help='Number of nearest neighbours for SRSE-style split.')
-parser.add_argument('--nse_delta', default=0.25, type=float,
+parser.add_argument('--srse_delta', default=0.25, type=float,
                     help='Per-class selection quantile for SRSE-style split.')
-parser.add_argument('--nse_model_weight', default=0.5, type=float,
+parser.add_argument('--srse_model_weight', default=0.5, type=float,
                     help='Maximum model-evidence weight in SRSE stage-2 fusion.')
-parser.add_argument('--nse_model_warmup_epochs', default=10, type=float,
+parser.add_argument('--srse_model_warmup_epochs', default=10, type=float,
                     help='Warmup horizon for model-evidence fusion in SRSE stage-2.')
-parser.add_argument('--nse_topology_rel_mode', default='masked_entropy', type=str,
+parser.add_argument('--srse_topology_rel_mode', default='masked_entropy', type=str,
                     choices=['masked_entropy', 'kl', 'agree'],
                     help='Reliability score used by the topology part of topology-DAES.')
-parser.add_argument('--nse_topology_rel_gamma', default=2.0, type=float,
+parser.add_argument('--srse_topology_rel_gamma', default=2.0, type=float,
                     help='Gamma for topology reliability exp(-gamma * score^2).')
-parser.add_argument('--nse_kl_self_mode', default='with_self', type=str,
+parser.add_argument('--srse_kl_self_mode', default='with_self', type=str,
                     choices=['with_self', 'no_self'],
                     help='Whether KL reliability uses the self node in topology-DAES.')
-parser.add_argument('--nse_daes_spatial_temp', default=0.5, type=float,
+parser.add_argument('--srse_daes_spatial_temp', default=0.5, type=float,
                     help='Spatial softmax temperature for DAES local entropy.')
-parser.add_argument('--nse_daes_base_tau', default=0.1, type=float,
+parser.add_argument('--srse_daes_base_tau', default=0.1, type=float,
                     help='Base dynamic temperature for DAES.')
-parser.add_argument('--nse_daes_entropy_coeff', default=0.5, type=float,
+parser.add_argument('--srse_daes_entropy_coeff', default=0.5, type=float,
                     help='Entropy coefficient for DAES dynamic temperature.')
-parser.add_argument('--nse_daes_sim_power', default=2.0, type=float,
+parser.add_argument('--srse_daes_sim_power', default=2.0, type=float,
                     help='Similarity sharpening power for DAES.')
-parser.add_argument('--nse_entropy_coeff', default=0.5, type=float,
-                    help='Backward-compatible alias for --nse_daes_entropy_coeff.')
-parser.add_argument('--nse_chunk_size', default=1024, type=int,
+parser.add_argument('--srse_entropy_coeff', default=0.5, type=float,
+                    help='Backward-compatible alias for --srse_daes_entropy_coeff.')
+parser.add_argument('--srse_chunk_size', default=1024, type=int,
                     help='Chunk size for full-dataset KNN in the SRSE-style split.')
 
 def main():
@@ -339,8 +339,8 @@ def main_worker(gpu, ngpus_per_node, args):
 
         adjust_learning_rate(args, optimizer, epoch)
         if epoch >= args.prot_start:
-            if args.split_mode in ('nse_topology', 'nse_topology_daes'):
-                nse_reliable_set_selection(args, epoch, sel_stats, train_givenY)
+            if args.split_mode in ('srse_topology', 'srse_topology_daes'):
+                srse_reliable_set_selection(args, epoch, sel_stats, train_givenY)
             else:
                 reliable_set_selection(args, epoch, sel_stats)
             # warm-up for 5 epochs and then start selection

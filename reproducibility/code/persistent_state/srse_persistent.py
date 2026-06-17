@@ -1854,7 +1854,7 @@ def _persistent_promotion_candidates(native_prior, scores, active_mask, estimate
         candidate_mask = conf >= tau
     elif scope == 'unreliable_highconf':
         candidate_mask = (~active_mask) & (conf >= tau)
-    elif scope == 'nse_estimated_noise_highconf':
+    elif scope == 'srse_estimated_noise_highconf':
         candidate_mask = estimated_noise_mask & (conf >= tau)
     elif scope == 'none':
         candidate_mask = np.zeros(scores.shape[0], dtype=bool)
@@ -2797,10 +2797,10 @@ def run_single_experiment(args):
         else:
             source_scores = knn_scores if getattr(args, 'source_update_evidence', 'model') == 'p2' else model_preds
         promotion_scores = knn_scores if getattr(args, 'promotion_source', 'p2') == 'p2' else model_preds
-        nse_estimated_noise_mask_np = (selected_mask.detach().cpu().numpy() <= 0)
+        srse_estimated_noise_mask_np = (selected_mask.detach().cpu().numpy() <= 0)
         _apply_persistent_promotion(
             args, logger, base_train_ds, epoch, promotion_scores, active_mask_np,
-            estimated_noise_mask=nse_estimated_noise_mask_np
+            estimated_noise_mask=srse_estimated_noise_mask_np
         )
         _apply_mvp_source_writeback(
             args, logger, base_train_ds, epoch, source_scores, active_mask_np,

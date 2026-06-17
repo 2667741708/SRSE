@@ -16,8 +16,8 @@ OUT="${OUT:-${ROOT}/out_ultimate/reproduce_srse_20260616}"
 GPU_ID="${GPU_ID:-0}"
 
 MAIN_SCRIPT="${MAIN_SCRIPT:-${ROOT}/reproducibility/code/main/main.py}"
-ABLATION_SCRIPT="${ABLATION_SCRIPT:-${ROOT}/reproducibility/code/component_ablation/NSE_ABLATION.py}"
-PSS_SCRIPT="${PSS_SCRIPT:-${ROOT}/reproducibility/code/persistent_state/NSE_persistent.py}"
+ABLATION_SCRIPT="${ABLATION_SCRIPT:-${ROOT}/reproducibility/code/component_ablation/srse_ablation.py}"
+PSS_SCRIPT="${PSS_SCRIPT:-${ROOT}/reproducibility/code/persistent_state/srse_persistent.py}"
 AGG_CROWD_SCRIPT="${AGG_CROWD_SCRIPT:-${ROOT}/reproducibility/code/main/aggregate_srse_main_crowd_results.py}"
 
 export PYTHONPATH="${ROOT}:${PYTHONPATH:-}"
@@ -211,7 +211,7 @@ run_pss_table() {
     --source_update_mode none \
     --source_update_scope none \
     --persistent_promotion_mode hard \
-    --promotion_scope nse_estimated_noise_highconf \
+    --promotion_scope srse_estimated_noise_highconf \
     --promotion_threshold 0.95 \
     --promotion_source p2 \
     --promotion_label_space non_candidate

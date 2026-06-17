@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 
 
-TARGET = Path(os.environ.get("SRSE_TRAIN_SCRIPT", Path(__file__).with_name("NSE_persistent.py")))
+TARGET = Path(os.environ.get("SRSE_TRAIN_SCRIPT", Path(__file__).with_name("srse_persistent.py")))
 
 
 def _load_functions(*names):
@@ -231,7 +231,7 @@ def test_promotion_v2_uses_estimated_noise_and_non_candidate_label_space():
         scores,
         active_mask=np.asarray([False, False, False]),
         estimated_noise_mask=np.asarray([True, True, False]),
-        scope="nse_estimated_noise_highconf",
+        scope="srse_estimated_noise_highconf",
         label_space="non_candidate",
         threshold=0.95,
     )

@@ -45,8 +45,8 @@ state remains a training target, not a source prior for supervision extraction.
 
 ## Files
 
-- `pico_plus_nse_split.patch`: applies the split replacement to the official
+- `pico_plus_srse_split.patch`: applies the split replacement to the official
   PiCO repository.
-- `pico_plus_nse_split.patch`: apply this patch to the official repository,
+- `pico_plus_srse_split.patch`: apply this patch to the official repository,
   then run the CIFAR-100 `q=0.05, eta=0.3` experiment with the same seed,
   optimizer, and 500-epoch protocol used by the SRSE launcher.
