@@ -81,6 +81,20 @@ Treeversity#6/
 
 `CIFAR100H` 由 CIFAR-100 类层级生成，不需要额外的图像压缩包。
 
+### CIFAR100H 候选标签构造协议
+
+`CIFAR100H` 使用与 `CIFAR100` 相同的 CIFAR-100 图像和 fine labels；区别只在候选标签集合的构造方式。运行时使用 `--dataset CIFAR100H` 会启用 hierarchical protocol。
+
+实现中采用 CIFAR-100 标准层级：20 个 superclasses，每个 superclass 包含 5 个 fine classes。对于真实 fine label 为 `y` 的训练样本，只有与 `y` 属于同一个 superclass 的 fine labels 才允许进入候选集合；其他 superclasses 的标签采样概率为 0。
+
+对每个样本，转移行定义为：
+
+- `P(y 被包含) = 1 - nr`，其中 `nr` 是通过 `--nr` 传入的 noisy-label rate。
+- 对同一 superclass 内每个 sibling fine class `c != y`，`P(c 被包含) = pr`，其中 `pr` 是通过 `--pr` 传入的 partial-label rate。
+- 对真实标签所在 superclass 之外的所有 fine classes，`P(c 被包含) = 0`。
+
+loader 会按上述概率采样一个二值候选向量，如果候选集合为空则重新采样。因此，当 `nr = 0` 时，真实标签一定在候选集合内；当 `nr > 0` 时，CIFAR100H 是 noisy candidate-label protocol，真实标签可能缺失。相比 uniform CIFAR-100 partial labels，CIFAR100H 把干扰标签限制在语义相关的 sibling classes 内，而不是从全部 99 个非真实类别中均匀采样。
+
 ## 预训练权重
 
 CIFAR 实验使用从头训练的 ResNet-18。众包数据集使用 TorchVision ImageNet-1K 预训练 backbone：

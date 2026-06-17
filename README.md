@@ -82,6 +82,20 @@ Treeversity#6/
 
 `CIFAR100H` is generated from the CIFAR-100 hierarchy and does not require a separate image archive.
 
+### CIFAR100H Candidate-Label Protocol
+
+`CIFAR100H` uses the same CIFAR-100 images and fine labels as `CIFAR100`; the only difference is the candidate-label construction. The loader activates the hierarchical protocol when `--dataset CIFAR100H` is used.
+
+The implementation builds the standard CIFAR-100 hierarchy with 20 superclasses and 5 fine classes per superclass. For a training sample with true fine label `y`, only labels from the same superclass as `y` can enter the candidate set. Labels from other superclasses have zero sampling probability.
+
+For each sample, the transition row is:
+
+- `P(y is included) = 1 - nr`, where `nr` is the noisy-label rate passed by `--nr`.
+- `P(c is included) = pr` for each sibling fine class `c != y` in the same superclass, where `pr` is the partial-label rate passed by `--pr`.
+- `P(c is included) = 0` for every fine class outside the true label's superclass.
+
+The loader samples a binary candidate vector from this row and resamples if the vector is empty. Therefore, with `nr = 0`, the true label is always included; with `nr > 0`, CIFAR100H becomes a noisy candidate-label protocol where the true label may be absent. Compared with uniform CIFAR-100 partial labels, CIFAR100H restricts distractor labels to semantically related sibling classes instead of sampling from all 99 non-ground-truth classes.
+
 ## Pretrained Weights
 
 CIFAR experiments use ResNet-18 from scratch. Crowdsourced datasets use TorchVision ImageNet-1K pretrained backbones:
