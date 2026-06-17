@@ -298,6 +298,7 @@ def parse_args():
     
     # [新增] 消融:禁用 Middleware Rectification
     parser.add_argument('--no_rectify', action='store_true', help='[Ablation] Disable Middleware Gating/Rectification.')
+    parser.add_argument('--ablate_no_cr', action='store_true', help='[Ablation] Disable consistency regularization.')
     
     # [新增] 消融:EMA 因子
     parser.add_argument('--ema_alpha', type=float, default=0.999, help='EMA momentum factor (default: 0.999).')
