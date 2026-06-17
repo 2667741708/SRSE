@@ -1639,6 +1639,22 @@ def log_tri_consensus_diagnostics(logger, epoch, true_labels,
     else:
         acc_grand = 0.0
     logger.info(f"  └─ 🌟 Grand Consensus (All 3 agree): {num_grand} samples | Acc={acc_grand:.2f}%")
+
+
+def apply_external_source_if_requested(args, base_train_ds, logger, log_dir):
+    """Optional extension hook for externally prepared weak-source labels.
+
+    The public SRSE main-table commands generate CIFAR weak labels inside this
+    script, so the default path must be a no-op.
+    """
+    external_source_path = getattr(args, 'external_source_path', None)
+    if not external_source_path:
+        return
+    raise NotImplementedError(
+        f"External source loading is not implemented in the public launcher: {external_source_path}"
+    )
+
+
 def run_single_experiment(args):
     start_time = time.time()
     set_seed(args.seed)
