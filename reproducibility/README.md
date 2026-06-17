@@ -6,7 +6,7 @@ SRSE manuscript experiments.
 Use the package-level launcher:
 
 ```bash
-bash reproducibility/commands/reproduce_srse_paper_experiments_20260616.sh help
+bash reproducibility/commands/reproduce_srse_paper_experiments.sh help
 ```
 
 Main code snapshots:

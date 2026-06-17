@@ -9,7 +9,7 @@ wrappers, and absolute-path provenance manifests.
 
 - `reproducibility/code/`: training, ablation, persistent-state proxy, and
   baseline source code.
-- `reproducibility/commands/reproduce_srse_paper_experiments_20260616.sh`:
+- `reproducibility/commands/reproduce_srse_paper_experiments.sh`:
   unified reproduction launcher with package-local defaults.
 - `data/*.py`: dataset loaders and candidate-label construction helpers.
 - `data/read.md` and `reproducibility/DATASETS_README.md`: dataset download
@@ -26,8 +26,8 @@ export DATA_ROOT=/path/to/cifar/root
 export CROWD_ROOT=/path/to/dcic/root
 export GPU_ID=0
 
-bash reproducibility/commands/reproduce_srse_paper_experiments_20260616.sh help
-bash reproducibility/commands/reproduce_srse_paper_experiments_20260616.sh main_c100_eta03
+bash reproducibility/commands/reproduce_srse_paper_experiments.sh help
+bash reproducibility/commands/reproduce_srse_paper_experiments.sh main_c100_eta03
 ```
 
 The unified launcher supports separate targets for the main CIFAR-100 run,

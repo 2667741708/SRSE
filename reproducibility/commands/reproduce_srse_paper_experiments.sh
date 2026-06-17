@@ -6,13 +6,13 @@ set -euo pipefail
 #
 # Example:
 #   PROJECT_ROOT=/path/to/unpacked/repo PY=/path/to/python GPU_ID=0 \
-#     bash reproducibility/commands/reproduce_srse_paper_experiments_20260616.sh main_c100_eta03
+#     bash reproducibility/commands/reproduce_srse_paper_experiments.sh main_c100_eta03
 
 ROOT="${PROJECT_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 PY="${PY:-python}"
 DATA_ROOT="${DATA_ROOT:-${ROOT}/data}"
 CROWD_ROOT="${CROWD_ROOT:-${ROOT}}"
-OUT="${OUT:-${ROOT}/out_ultimate/reproduce_srse_20260616}"
+OUT="${OUT:-${ROOT}/out_ultimate/reproduce_srse}"
 GPU_ID="${GPU_ID:-0}"
 
 MAIN_SCRIPT="${MAIN_SCRIPT:-${ROOT}/reproducibility/code/main/main.py}"
@@ -27,7 +27,7 @@ export WANDB_SILENT="${WANDB_SILENT:-true}"
 usage() {
   cat <<'USAGE'
 Usage:
-  bash reproduce_srse_paper_experiments_20260616.sh <target>
+  bash reproduce_srse_paper_experiments.sh <target>
 
 Targets:
   main_c100_eta03        Main CIFAR-100 q=0.05 eta=0.3 SRSE run, seeds 1/2/3.

@@ -9,7 +9,7 @@ point role only; runnable command lines belong here.
 Use the unified launcher from the repository root:
 
 ```bash
-bash reproducibility/commands/reproduce_srse_paper_experiments_20260616.sh help
+bash reproducibility/commands/reproduce_srse_paper_experiments.sh help
 ```
 
 The launcher supports the current paper-facing targets:

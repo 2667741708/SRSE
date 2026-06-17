@@ -116,29 +116,29 @@ export CROWD_ROOT=$PWD
 export GPU_ID=0
 export OUT=$PWD/out_ultimate/reproduce_srse
 
-bash reproducibility/commands/reproduce_srse_paper_experiments_20260616.sh help
+bash reproducibility/commands/reproduce_srse_paper_experiments.sh help
 ```
 
 主 CIFAR-100 结果：
 
 ```bash
-bash reproducibility/commands/reproduce_srse_paper_experiments_20260616.sh main_c100_eta03
+bash reproducibility/commands/reproduce_srse_paper_experiments.sh main_c100_eta03
 ```
 
 Topology-DAES 微消融：
 
 ```bash
-bash reproducibility/commands/reproduce_srse_paper_experiments_20260616.sh topology_micro_eta03
-bash reproducibility/commands/reproduce_srse_paper_experiments_20260616.sh topology_micro_eta04
+bash reproducibility/commands/reproduce_srse_paper_experiments.sh topology_micro_eta03
+bash reproducibility/commands/reproduce_srse_paper_experiments.sh topology_micro_eta04
 ```
 
 其他论文表格：
 
 ```bash
-bash reproducibility/commands/reproduce_srse_paper_experiments_20260616.sh component_table
-bash reproducibility/commands/reproduce_srse_paper_experiments_20260616.sh pss_table
-bash reproducibility/commands/reproduce_srse_paper_experiments_20260616.sh no_reg_table
-bash reproducibility/commands/reproduce_srse_paper_experiments_20260616.sh crowd_srse_table
+bash reproducibility/commands/reproduce_srse_paper_experiments.sh component_table
+bash reproducibility/commands/reproduce_srse_paper_experiments.sh pss_table
+bash reproducibility/commands/reproduce_srse_paper_experiments.sh no_reg_table
+bash reproducibility/commands/reproduce_srse_paper_experiments.sh crowd_srse_table
 ```
 
 launcher 会在执行前打印完整 Python 命令，并把输出写入 `OUT`。
