@@ -223,6 +223,9 @@ def parse_args():
     # ===========================================================================
     parser.add_argument('--adap_rel_eps', type=float, default=1e-12,
                         help='[AdapFuse] Numerical stability ε for CE computation.')
+    parser.add_argument('--ri_model_conf_mode', type=str, default='max',
+                        choices=['max', 'prior_mass'],
+                        help='Model-confidence term used in the r_i ratio.')
 
     # ===========================================================================
     # [新增 / New] 渐进融合(Progressive Fusion)预热参数
@@ -949,6 +952,16 @@ def get_topology_daes_affinity(raw_D, neighbors_indices, current_soft_labels, ar
 import torch
 import torch.nn.functional as F
 import numpy as np
+
+
+def compute_model_confidence_for_ri(p_model, omega, mode='max', eps=1e-12):
+    if mode == 'max':
+        return p_model.max(dim=1)[0]
+    if mode == 'prior_mass':
+        support = omega > eps
+        return torch.where(support, p_model, torch.zeros_like(p_model)).sum(dim=1)
+    raise ValueError(f"Unsupported ri_model_conf_mode={mode}")
+
 
 def reliable_pseudolabel_selection_advanced(logger, args, device, trainloader, features, epoch,
                                             state_manager, model_preds=None, proto_manager=None):

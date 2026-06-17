@@ -11,7 +11,9 @@ import torch
 
 
 def load_module():
-    script_env = os.environ["SRSE_SCRIPT_PATH"]
+    script_env = os.environ.get("SRSE_SCRIPT_PATH")
+    if script_env is None:
+        script_env = str(Path(__file__).with_name("srse_ablation.py"))
     script_path = Path(script_env).resolve()
     spec = importlib.util.spec_from_file_location("srse_train_under_test", script_path)
     if spec is None or spec.loader is None:
@@ -21,7 +23,7 @@ def load_module():
     return module
 
 
-def main() -> None:
+def test_compute_model_confidence_for_ri() -> None:
     module = load_module()
     fn = module.compute_model_confidence_for_ri
 
@@ -49,4 +51,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    test_compute_model_confidence_for_ri()
