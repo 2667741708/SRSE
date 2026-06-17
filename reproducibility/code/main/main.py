@@ -715,7 +715,9 @@ class FeatureExtractionDataset(Dataset):
             img = Image.fromarray(self.base_dataset.data[index])
         # --- (修改结束) ---
 
-        # 2. 应用 weak_t 和 strong_t
+        # 2. Apply the requested feature-screening view.
+        if self.strong_t is None:
+            return self.weak_t(img), index
         return (self.weak_t(img), self.strong_t(img)), index
 
 
