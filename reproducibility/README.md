@@ -9,6 +9,12 @@ Use the package-level launcher:
 bash reproducibility/commands/reproduce_srse_paper_experiments.sh help
 ```
 
+Dataset-specific CIFAR main-table launchers are also available:
+
+- `commands/reproduce_srse_cifar10_experiments.sh`
+- `commands/reproduce_srse_cifar100_experiments.sh`
+- `commands/reproduce_srse_cifar100h_experiments.sh`
+
 Main code snapshots:
 
 - `code/main/main.py`: SRSE main training entry.

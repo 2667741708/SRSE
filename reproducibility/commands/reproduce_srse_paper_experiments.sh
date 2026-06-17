@@ -19,6 +19,9 @@ MAIN_SCRIPT="${MAIN_SCRIPT:-${ROOT}/reproducibility/code/main/main.py}"
 ABLATION_SCRIPT="${ABLATION_SCRIPT:-${ROOT}/reproducibility/code/component_ablation/srse_ablation.py}"
 PSS_SCRIPT="${PSS_SCRIPT:-${ROOT}/reproducibility/code/persistent_state/srse_persistent.py}"
 AGG_CROWD_SCRIPT="${AGG_CROWD_SCRIPT:-${ROOT}/reproducibility/code/main/aggregate_srse_main_crowd_results.py}"
+CIFAR10_SCRIPT="${CIFAR10_SCRIPT:-${ROOT}/reproducibility/commands/reproduce_srse_cifar10_experiments.sh}"
+CIFAR100_SCRIPT="${CIFAR100_SCRIPT:-${ROOT}/reproducibility/commands/reproduce_srse_cifar100_experiments.sh}"
+CIFAR100H_SCRIPT="${CIFAR100H_SCRIPT:-${ROOT}/reproducibility/commands/reproduce_srse_cifar100h_experiments.sh}"
 
 export PYTHONPATH="${ROOT}:${PYTHONPATH:-}"
 export WANDB_MODE="${WANDB_MODE:-disabled}"
@@ -30,6 +33,10 @@ Usage:
   bash reproduce_srse_paper_experiments.sh <target>
 
 Targets:
+  cifar10_table          CIFAR-10 SRSE main-table q/eta grid, seeds 1/2/3.
+  cifar100_table         CIFAR-100 SRSE main-table q/eta grid, seeds 1/2/3.
+  cifar100h_table        CIFAR100H SRSE main-table condition, seeds 1/2/3.
+  cifar_main_tables      Run CIFAR-10, CIFAR-100, and CIFAR100H main tables.
   main_c100_eta03        Main CIFAR-100 q=0.05 eta=0.3 SRSE run, seeds 1/2/3.
   topology_micro_eta03   One-factor Topology-DAES micro-ablation at eta=0.3, seed 1.
   topology_micro_eta04   One-factor Topology-DAES micro-ablation at eta=0.4, seed 1.
@@ -42,7 +49,8 @@ Targets:
 
 Runtime overrides:
   PROJECT_ROOT, PY, DATA_ROOT, CROWD_ROOT, OUT, GPU_ID, MAIN_SCRIPT,
-  ABLATION_SCRIPT, PSS_SCRIPT, AGG_CROWD_SCRIPT.
+  ABLATION_SCRIPT, PSS_SCRIPT, AGG_CROWD_SCRIPT, CIFAR10_SCRIPT,
+  CIFAR100_SCRIPT, CIFAR100H_SCRIPT, SEEDS.
 USAGE
 }
 
@@ -52,6 +60,34 @@ run_py() {
   printf ' %q' "$PY" "$@"
   echo
   "$PY" "$@"
+}
+
+run_sh() {
+  local script="$1"
+  shift
+  echo
+  printf '[run] bash'
+  printf ' %q' "${script}" "$@"
+  echo
+  bash "${script}" "$@"
+}
+
+run_cifar10_table() {
+  run_sh "${CIFAR10_SCRIPT}" main_table
+}
+
+run_cifar100_table() {
+  run_sh "${CIFAR100_SCRIPT}" main_table
+}
+
+run_cifar100h_table() {
+  run_sh "${CIFAR100H_SCRIPT}" main_table
+}
+
+run_cifar_main_tables() {
+  run_cifar10_table
+  run_cifar100_table
+  run_cifar100h_table
 }
 
 common_cifar_args=(
@@ -311,6 +347,10 @@ run_crowd_srse_table() {
 
 target="${1:-help}"
 case "${target}" in
+  cifar10_table) run_cifar10_table ;;
+  cifar100_table) run_cifar100_table ;;
+  cifar100h_table) run_cifar100h_table ;;
+  cifar_main_tables) run_cifar_main_tables ;;
   main_c100_eta03) run_main_c100_eta03 ;;
   topology_micro_eta03) run_topology_micro 0.3 ;;
   topology_micro_eta04) run_topology_micro 0.4 ;;
@@ -319,7 +359,7 @@ case "${target}" in
   no_reg_table) run_no_reg_table ;;
   crowd_srse_table) run_crowd_srse_table ;;
   all)
-    run_main_c100_eta03
+    run_cifar_main_tables
     run_topology_micro 0.3
     run_topology_micro 0.4
     run_component_table

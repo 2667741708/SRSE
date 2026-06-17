@@ -135,10 +135,22 @@ bash reproducibility/commands/reproduce_srse_paper_experiments.sh topology_micro
 Other manuscript tables:
 
 ```bash
+bash reproducibility/commands/reproduce_srse_paper_experiments.sh cifar10_table
+bash reproducibility/commands/reproduce_srse_paper_experiments.sh cifar100_table
+bash reproducibility/commands/reproduce_srse_paper_experiments.sh cifar100h_table
 bash reproducibility/commands/reproduce_srse_paper_experiments.sh component_table
 bash reproducibility/commands/reproduce_srse_paper_experiments.sh pss_table
 bash reproducibility/commands/reproduce_srse_paper_experiments.sh no_reg_table
 bash reproducibility/commands/reproduce_srse_paper_experiments.sh crowd_srse_table
+```
+
+The CIFAR main-table launchers are also available as separate dataset-level
+scripts:
+
+```bash
+bash reproducibility/commands/reproduce_srse_cifar10_experiments.sh main_table
+bash reproducibility/commands/reproduce_srse_cifar100_experiments.sh main_table
+bash reproducibility/commands/reproduce_srse_cifar100h_experiments.sh main_table
 ```
 
 The launcher prints each full Python command before execution and stores outputs under `OUT`.

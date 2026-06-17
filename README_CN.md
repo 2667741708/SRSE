@@ -134,10 +134,21 @@ bash reproducibility/commands/reproduce_srse_paper_experiments.sh topology_micro
 其他论文表格：
 
 ```bash
+bash reproducibility/commands/reproduce_srse_paper_experiments.sh cifar10_table
+bash reproducibility/commands/reproduce_srse_paper_experiments.sh cifar100_table
+bash reproducibility/commands/reproduce_srse_paper_experiments.sh cifar100h_table
 bash reproducibility/commands/reproduce_srse_paper_experiments.sh component_table
 bash reproducibility/commands/reproduce_srse_paper_experiments.sh pss_table
 bash reproducibility/commands/reproduce_srse_paper_experiments.sh no_reg_table
 bash reproducibility/commands/reproduce_srse_paper_experiments.sh crowd_srse_table
+```
+
+CIFAR 主表也可以直接使用按数据集拆分的脚本：
+
+```bash
+bash reproducibility/commands/reproduce_srse_cifar10_experiments.sh main_table
+bash reproducibility/commands/reproduce_srse_cifar100_experiments.sh main_table
+bash reproducibility/commands/reproduce_srse_cifar100h_experiments.sh main_table
 ```
 
 launcher 会在执行前打印完整 Python 命令，并把输出写入 `OUT`。

@@ -31,9 +31,11 @@ bash reproducibility/commands/reproduce_srse_paper_experiments.sh main_c100_eta0
 ```
 
 The unified launcher supports separate targets for the main CIFAR-100 run,
-Topology-DAES micro-ablation rows, component ablations, persistent
-supervision-state proxies, no-MixUp/no-CR fairness checks, and SRSE
-crowdsourced-dataset rows.
+CIFAR-10/CIFAR-100/CIFAR100H main-table grids, Topology-DAES micro-ablation
+rows, component ablations, persistent supervision-state proxies,
+no-MixUp/no-CR fairness checks, and SRSE crowdsourced-dataset rows. The CIFAR
+main-table grids are also available through dataset-specific scripts under
+`reproducibility/commands/`.
 
 ## Excluded By Design
 
