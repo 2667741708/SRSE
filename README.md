@@ -187,6 +187,8 @@ bash reproducibility/commands/reproduce_srse_cifar100h_experiments.sh main_table
 ```
 
 The launcher prints each full Python command before execution and stores outputs under `OUT`.
+For crowdsourced datasets, `crowd_srse_table` runs Benthic, Plankton, and
+Treeversity at both `lpi=3` and `lpi=10`.
 
 ## Expected Result Scale
 

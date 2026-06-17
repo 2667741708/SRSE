@@ -185,6 +185,8 @@ bash reproducibility/commands/reproduce_srse_cifar100h_experiments.sh main_table
 ```
 
 launcher 会在执行前打印完整 Python 命令，并把输出写入 `OUT`。
+对于众包数据集，`crowd_srse_table` 会运行 Benthic、Plankton 和
+Treeversity 的 `lpi=3` 与 `lpi=10` 条件。
 
 ## 预期结果尺度
 

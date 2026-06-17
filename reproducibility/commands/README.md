@@ -52,6 +52,16 @@ Each script accepts `main_table`, `all`, `help`, and per-condition targets
 such as `q005_eta03`. The scripts use the same runtime overrides as the
 unified launcher, plus `SEEDS` for changing the seed list.
 
+## Crowd Launcher Coverage
+
+`crowd_srse_table` runs SRSE on the public crowdsourced-dataset rows:
+
+- Benthic: `lpi=3` and `lpi=10`, `pals_3fold`.
+- Plankton: `lpi=3` and `lpi=10`, `standard`.
+- Treeversity: `lpi=3` and `lpi=10`, `pals_3fold`.
+
+The table uses slice 2 and seeds 1/2/3 for all rows.
+
 ## Maintenance Rule
 
 When adding or changing an experiment command, update the launcher or add a

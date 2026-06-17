@@ -37,14 +37,14 @@ Targets:
   cifar100_table         CIFAR-100 SRSE main-table q/eta grid, seeds 1/2/3.
   cifar100h_table        CIFAR100H SRSE main-table condition, seeds 1/2/3.
   cifar_main_tables      Run CIFAR-10, CIFAR-100, and CIFAR100H main tables.
-  main_c100_eta03        Main CIFAR-100 q=0.05 eta=0.3 SRSE run, seeds 1/2/3.
+  main_c100_eta03        Alias for CIFAR-100 q=0.05 eta=0.3, seeds 1/2/3.
   topology_micro_eta03   One-factor Topology-DAES micro-ablation at eta=0.3, seed 1.
   topology_micro_eta04   One-factor Topology-DAES micro-ablation at eta=0.4, seed 1.
   component_table        Legacy/full component-ablation rows A0-A11, seeds 1/2/3.
   pss_table              Persistent supervision-state proxy rows, seeds 1/2/3.
   no_reg_table           CIFAR no-MixUp/no-CR fairness table, seeds 1/2/3.
-  crowd_srse_table       SRSE crowdsourced-dataset rows, seeds 1/2/3.
-  all                    Run all targets above sequentially.
+  crowd_srse_table       SRSE crowdsourced-dataset rows, lpi=3/10, seeds 1/2/3.
+  all                    Run non-overlapping target groups sequentially.
   help                   Print this help.
 
 Runtime overrides:
@@ -90,6 +90,10 @@ run_cifar_main_tables() {
   run_cifar100h_table
 }
 
+run_main_c100_eta03() {
+  run_sh "${CIFAR100_SCRIPT}" q005_eta03
+}
+
 common_cifar_args=(
   --train_root "${DATA_ROOT}"
   --lpi 10
@@ -117,16 +121,6 @@ common_cifar_args=(
   --out "${OUT}"
   --cuda_dev "${GPU_ID}"
 )
-
-run_main_c100_eta03() {
-  run_py "${MAIN_SCRIPT}" \
-    --dataset CIFAR100 \
-    "${common_cifar_args[@]}" \
-    --pr 0.05 \
-    --nr 0.3 \
-    --seeds 1 2 3 \
-    --exp_name main_table/c100_pr005_nr03_srse_e500_seed123
-}
 
 run_topology_micro_row() {
   local eta="$1"
@@ -273,15 +267,27 @@ run_no_reg() {
     --ablate_no_reliable_mixup
 }
 
-run_no_reg_table() {
+run_no_reg_rows() {
+  local include_component_duplicate="$1"
   run_no_reg CIFAR10 0.1 0.1 CIFAR10_pr01_nr01
   run_no_reg CIFAR10 0.1 0.3 CIFAR10_pr01_nr03
   run_no_reg CIFAR10 0.5 0.1 CIFAR10_pr05_nr01
   run_no_reg CIFAR10 0.5 0.3 CIFAR10_pr05_nr03
   run_no_reg CIFAR100 0.03 0.1 CIFAR100_pr003_nr01
   run_no_reg CIFAR100 0.03 0.3 CIFAR100_pr003_nr03
-  run_no_reg CIFAR100 0.05 0.3 CIFAR100_pr005_nr03
+  if [[ "${include_component_duplicate}" == "yes" ]]; then
+    run_no_reg CIFAR100 0.05 0.3 CIFAR100_pr005_nr03
+  fi
   run_no_reg CIFAR100 0.05 0.5 CIFAR100_pr005_nr05
+}
+
+run_no_reg_table() {
+  run_no_reg_rows yes
+}
+
+run_no_reg_table_without_component_duplicate() {
+  # CIFAR100 q=0.05 eta=0.3 no-CR/no-MixUp is covered by component_table A11.
+  run_no_reg_rows no
 }
 
 run_crowd_srse() {
@@ -336,7 +342,9 @@ run_crowd_srse_table() {
   run_crowd_srse Benthic 3 "${GPU_ID}" pals_3fold
   run_crowd_srse Benthic 10 "${GPU_ID}" pals_3fold
   run_crowd_srse Plankton 3 "${GPU_ID}" standard
+  run_crowd_srse Plankton 10 "${GPU_ID}" standard
   run_crowd_srse Treeversity 3 "${GPU_ID}" pals_3fold
+  run_crowd_srse Treeversity 10 "${GPU_ID}" pals_3fold
   if [[ -f "${AGG_CROWD_SCRIPT}" ]]; then
     run_py "${AGG_CROWD_SCRIPT}" \
       --root "${OUT}/crowd_srse_table" \
@@ -364,7 +372,7 @@ case "${target}" in
     run_topology_micro 0.4
     run_component_table
     run_pss_table
-    run_no_reg_table
+    run_no_reg_table_without_component_duplicate
     run_crowd_srse_table
     ;;
   help|-h|--help) usage ;;
