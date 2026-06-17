@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.getcwd())
 
 import argparse
+import json
 import os
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -64,7 +65,7 @@ def set_seed(seed):
 
 # In Section 0: 环境设置 (Environment Setup)
 
-def setup_logger(log_dir, filename="run.log", is_master=False, to_console=False):
+def setup_logger(log_dir, filename="run.log", is_master=False, to_console=False, append=False):
     """
     Modified to allow disabling console output explicitly.
     """
@@ -85,7 +86,7 @@ def setup_logger(log_dir, filename="run.log", is_master=False, to_console=False)
     log_file = os.path.join(log_dir, filename)
     
     # File Handler (Always active)
-    file_handler = logging.FileHandler(log_file, mode='w')
+    file_handler = logging.FileHandler(log_file, mode='a' if append else 'w')
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
     
@@ -96,6 +97,142 @@ def setup_logger(log_dir, filename="run.log", is_master=False, to_console=False)
         logger.addHandler(console_handler)
         
     return logger
+
+
+def _resolve_resume_checkpoint(args, log_dir):
+    """Resolve an explicit or auto-resume checkpoint path."""
+    explicit_path = getattr(args, 'resume_from_checkpoint', None)
+    if explicit_path:
+        return explicit_path
+    if not getattr(args, 'auto_resume', False):
+        return None
+    latest_path = os.path.join(log_dir, 'checkpoints', 'latest.pt')
+    return latest_path if os.path.exists(latest_path) else None
+
+
+def _append_epoch_metrics(log_dir, metrics):
+    os.makedirs(log_dir, exist_ok=True)
+    csv_path = os.path.join(log_dir, 'epoch_metrics.csv')
+    jsonl_path = os.path.join(log_dir, 'epoch_metrics.jsonl')
+    fieldnames = list(metrics.keys())
+    write_header = not os.path.exists(csv_path)
+    with open(csv_path, 'a', encoding='utf-8', newline='') as fh:
+        writer = csv.DictWriter(fh, fieldnames=fieldnames)
+        if write_header:
+            writer.writeheader()
+        writer.writerow(metrics)
+    with open(jsonl_path, 'a', encoding='utf-8') as fh:
+        fh.write(json.dumps(metrics, ensure_ascii=False, sort_keys=True) + '\n')
+
+
+def _capture_rng_state():
+    state = {
+        'python': random.getstate(),
+        'numpy': np.random.get_state(),
+        'torch': torch.get_rng_state(),
+    }
+    if torch.cuda.is_available():
+        state['cuda'] = torch.cuda.get_rng_state_all()
+    return state
+
+
+def _restore_rng_state(state):
+    if not state:
+        return
+    if state.get('python') is not None:
+        random.setstate(state['python'])
+    if state.get('numpy') is not None:
+        np.random.set_state(state['numpy'])
+    if state.get('torch') is not None:
+        torch.set_rng_state(state['torch'])
+    if torch.cuda.is_available() and state.get('cuda') is not None:
+        torch.cuda.set_rng_state_all(state['cuda'])
+
+
+def _safe_torch_load(path, map_location=None):
+    try:
+        return torch.load(path, map_location=map_location, weights_only=False)
+    except TypeError:
+        return torch.load(path, map_location=map_location)
+
+
+def _prototype_state_dict(proto_manager):
+    return {
+        'prototypes': proto_manager.prototypes.detach().cpu(),
+        'is_initialized': bool(proto_manager.is_initialized),
+        'num_classes': int(proto_manager.num_classes),
+        'feature_dim': int(proto_manager.feature_dim),
+        'ema_alpha': float(proto_manager.ema_alpha),
+    }
+
+
+def _load_prototype_state_dict(proto_manager, state, device):
+    if not state:
+        return
+    if state.get('prototypes') is not None:
+        proto_manager.prototypes = state['prototypes'].to(device)
+    if state.get('is_initialized') is not None:
+        proto_manager.is_initialized = bool(state['is_initialized'])
+
+
+def _temporal_state_dict(state_manager):
+    return {
+        'tri_consensus_history': list(state_manager.tri_consensus_history),
+        'is_reliable_history': list(state_manager.is_reliable_history),
+        'pruned_pl_history': list(state_manager.pruned_pl_history),
+        'geo_pl_history': list(state_manager.geo_pl_history),
+        'proto_pl_history': list(state_manager.proto_pl_history),
+        'prob_ema': state_manager.prob_ema,
+        'ema_m': state_manager.ema_m,
+        'history_len': state_manager.history_len,
+        'use_disambiguation': state_manager.use_disambiguation,
+    }
+
+
+def _load_temporal_state_dict(state_manager, state):
+    if not state:
+        return
+    history_len = state.get('history_len', state_manager.history_len)
+    state_manager.tri_consensus_history = deque(state.get('tri_consensus_history', []), maxlen=history_len)
+    state_manager.is_reliable_history = deque(state.get('is_reliable_history', []), maxlen=history_len)
+    state_manager.pruned_pl_history = deque(state.get('pruned_pl_history', []), maxlen=history_len)
+    state_manager.geo_pl_history = deque(state.get('geo_pl_history', []), maxlen=history_len)
+    state_manager.proto_pl_history = deque(state.get('proto_pl_history', []), maxlen=history_len)
+    if state.get('prob_ema') is not None:
+        state_manager.prob_ema = state['prob_ema']
+    if state.get('ema_m') is not None:
+        state_manager.ema_m = state['ema_m']
+    if state.get('use_disambiguation') is not None:
+        state_manager.use_disambiguation = bool(state['use_disambiguation'])
+
+
+def _save_epoch_checkpoint(log_dir, epoch, args, encoder, classifier, optimizer,
+                           scheduler, proto_manager, state_manager, best_test_acc,
+                           test_acc, metrics, is_best=False):
+    ckpt_dir = os.path.join(log_dir, 'checkpoints')
+    os.makedirs(ckpt_dir, exist_ok=True)
+    payload = {
+        'epoch': int(epoch),
+        'next_epoch': int(epoch),
+        'encoder': encoder.state_dict(),
+        'classifier': classifier.state_dict(),
+        'optimizer': optimizer.state_dict(),
+        'scheduler': scheduler.state_dict(),
+        'prototype_manager': _prototype_state_dict(proto_manager),
+        'temporal_state_manager': _temporal_state_dict(state_manager),
+        'rng_state': _capture_rng_state(),
+        'args': vars(args),
+        'best_test_acc': float(best_test_acc),
+        'test_acc': float(test_acc),
+        'metrics': metrics,
+    }
+    epoch_path = os.path.join(ckpt_dir, f'epoch_{epoch:04d}.pt')
+    latest_path = os.path.join(ckpt_dir, 'latest.pt')
+    torch.save(payload, epoch_path)
+    torch.save(payload, latest_path)
+    if is_best:
+        torch.save(payload, os.path.join(ckpt_dir, 'best.pt'))
+    return epoch_path
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Ultimate Hybrid PALS-SSL Framework with Three-Phase Training')
@@ -108,6 +245,12 @@ def parse_args():
                                 'Treeversity', 'Benthic', 'Plankton',])
     parser.add_argument('--train_root', default='./data', help='root for train data')
     parser.add_argument('--out', type=str, default='./out_ultimate', help='Directory for output')
+    parser.add_argument('--checkpoint_every_epoch', action='store_true',
+                        help='Write epoch checkpoints plus epoch_metrics.csv/jsonl.')
+    parser.add_argument('--auto_resume', action='store_true',
+                        help='Resume from checkpoints/latest.pt under the seed output directory if present.')
+    parser.add_argument('--resume_from_checkpoint', type=str, default=None,
+                        help='Explicit checkpoint path to resume from.')
     parser.add_argument('--seeds', type=int, nargs='+', default=[1], help='List of random seeds.')
     parser.add_argument('--num_workers', type=int, default=4, help='num workers')
     parser.add_argument('--cuda_dev', type=int, default=0, help='GPU to select')
