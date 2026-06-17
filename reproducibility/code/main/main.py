@@ -264,7 +264,7 @@ def parse_args():
     parser.add_argument('--split_protocol', type=str, default='standard',
                         choices=['standard', 'pals_3fold'],
                         help='Crowdsourced-dataset fold protocol.')
-    parser.add_argument('--feature_extract_view', type=str, default='weak_only',
+    parser.add_argument('--feature_extract_view', type=str, default='weak_strong_fusion',
                         choices=['weak_only', 'weak_strong_fusion'],
                         help='View policy for epoch-level feature extraction.')
     # 核心算法开关
@@ -1343,7 +1343,7 @@ def reliable_pseudolabel_selection_advanced(logger, args, device, trainloader, f
 
 
 @torch.no_grad()
-def get_features(encoder, classifier, loader, device, feature_extract_view='weak_only'):
+def get_features(encoder, classifier, loader, device, feature_extract_view='weak_strong_fusion'):
     encoder.eval(); classifier.eval(); all_features, all_predictions, all_indices = [], [], []
     for images_dual, indices in loader:
         if isinstance(images_dual, (tuple, list)):
@@ -1357,9 +1357,8 @@ def get_features(encoder, classifier, loader, device, feature_extract_view='weak
         weak_imgs = weak_imgs.to(device, non_blocking=True)
 
         with autocast():
-            # SRSE screening uses weak-view features for KNN topology. The default
-            # path also uses weak-view predictions to avoid a second global
-            # strong-view forward before active-set construction.
+            # SRSE screening uses weak-view features for KNN topology. The
+            # paper-log-compatible default fuses weak/strong predictions.
             feat_w = encoder(weak_imgs)
             pred_w = F.softmax(classifier(feat_w), dim=1)
 
