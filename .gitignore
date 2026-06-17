@@ -30,6 +30,9 @@ checkpoints/
 *.npy
 *.pkl
 
+# Local-only comparison scripts
+reproducibility/code/baselines/
+
 # OS/editor
 .DS_Store
 Thumbs.db

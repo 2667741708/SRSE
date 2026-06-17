@@ -7,8 +7,8 @@ wrappers, and absolute-path provenance manifests.
 
 ## Contents
 
-- `reproducibility/code/`: training, ablation, persistent-state proxy, and
-  baseline source code.
+- `reproducibility/code/`: training, ablation, and persistent-state proxy
+  source code.
 - `reproducibility/commands/reproduce_srse_paper_experiments.sh`:
   unified reproduction launcher with package-local defaults.
 - `data/*.py`: dataset loaders and candidate-label construction helpers.
@@ -38,6 +38,7 @@ crowdsourced-dataset rows.
 ## Excluded By Design
 
 - Dataset archives and extracted dataset folders.
+- Baseline-comparison experiment scripts, which are kept local-only.
 - `out_ultimate`, checkpoint directories, `.pt/.pth/.ckpt` files.
 - Raw `run.log`, `master_log.txt`, and launcher log files.
 - Machine-local launch wrappers with hard-coded absolute paths.

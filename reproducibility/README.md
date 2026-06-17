@@ -16,8 +16,7 @@ Main code snapshots:
   ablation entry.
 - `code/persistent_state/srse_persistent.py`: persistent supervision-state
   proxy entry.
-- `code/baselines/`: baseline-control utilities retained for comparison
-  experiments.
 
-Datasets, generated outputs, checkpoints, raw logs, and machine-local launcher
-wrappers are intentionally excluded from this public package.
+Datasets, generated outputs, checkpoints, raw logs, baseline-comparison
+experiment scripts, and machine-local launcher wrappers are intentionally
+excluded from this public package.

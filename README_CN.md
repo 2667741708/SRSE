@@ -4,7 +4,7 @@
 
 Source-Restored Supervision Extraction (SRSE) 是一个面向 noisy partial-label learning（含噪部分标签学习）的公开复现实验包。本仓库包含当前 SRSE 论文实验使用的公开代码快照、数据放置说明、环境配置和统一复现实验入口。
 
-这个 release 只发布代码与复现脚本，不包含数据集、生成的特征缓存、原始训练日志、checkpoint 或带有机器本地绝对路径的启动脚本。
+这个 release 只发布 SRSE 代码与复现脚本，不包含数据集、生成的特征缓存、原始训练日志、checkpoint、baseline 对比实验脚本或带有机器本地绝对路径的启动脚本。
 
 ## 仓库内容
 
@@ -15,7 +15,6 @@ reproducibility/
   code/main/main.py           SRSE 主训练入口。
   code/component_ablation/    组件消融与 Topology-DAES 消融入口。
   code/persistent_state/      持久化监督状态 proxy 实验。
-  code/baselines/             用于对比实验的 baseline-control 工具。
   commands/                   统一论文实验 launcher。
 ```
 
@@ -152,6 +151,7 @@ launcher 会在执行前打印完整 Python 命令，并把输出写入 `OUT`。
 仓库排除了：
 
 - 数据集压缩包和解压后的数据集目录。
+- baseline 对比实验脚本，这部分仅在本地保留。
 - `out_ultimate`、checkpoint、`.pt/.pth/.ckpt`、`.npz/.npy/.pkl` 和原始日志等生成产物。
 - Python 字节码和缓存目录。
 - 带硬编码绝对路径的机器本地启动脚本。

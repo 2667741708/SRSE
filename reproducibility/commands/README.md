@@ -30,5 +30,5 @@ Runtime variables such as `PROJECT_ROOT`, `PY`, `DATA_ROOT`, `CROWD_ROOT`,
 
 When adding or changing an experiment command, update the launcher or add a
 separate command file in this directory. Do not add long command blocks to the
-top of `main.py`, ablation scripts, persistent-state scripts, or baseline
-training scripts.
+top of `main.py`, ablation scripts, persistent-state scripts, or local-only
+comparison scripts.

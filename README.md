@@ -4,7 +4,7 @@
 
 Source-Restored Supervision Extraction (SRSE) is a reproducibility package for noisy partial-label learning experiments. The repository contains the public code snapshot, dataset placement notes, environment specifications, and command launcher used for the current SRSE manuscript experiments.
 
-This release is intentionally code-focused. It excludes datasets, generated feature caches, raw training logs, checkpoints, and machine-local launch wrappers.
+This release is intentionally code-focused. It excludes datasets, generated feature caches, raw training logs, checkpoints, baseline-comparison experiment scripts, and machine-local launch wrappers.
 
 ## What Is Included
 
@@ -15,7 +15,6 @@ reproducibility/
   code/main/main.py           Main SRSE training entry point.
   code/component_ablation/    Component and Topology-DAES ablation entry points.
   code/persistent_state/      Persistent supervision-state proxy experiments.
-  code/baselines/             Baseline-control utilities retained for comparison.
   commands/                   Unified paper-experiment launcher.
 ```
 
@@ -153,6 +152,7 @@ With the same seeds and hyperparameters, the main CIFAR-100 setting `q=0.05, eta
 The repository excludes:
 
 - Dataset archives and extracted dataset folders.
+- Baseline-comparison experiment scripts, which are kept local-only.
 - Generated outputs such as `out_ultimate`, checkpoints, `.pt/.pth/.ckpt`, `.npz/.npy/.pkl`, and raw logs.
 - Python bytecode and cache directories.
 - Machine-local launch wrappers with hard-coded absolute paths.
