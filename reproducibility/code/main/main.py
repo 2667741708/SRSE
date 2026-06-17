@@ -260,6 +260,12 @@ def parse_args():
     parser.add_argument('--nr', type=float, default=0.5, help='noise ratio (eta)')
     parser.add_argument('--lpi', type=int, default=10, help='Labels Per Image (LPI) for crowdsource partial-label conversion')
     parser.add_argument('--slice', type=int, default=1, choices=[1, 2, 3, 4, 5], help='Fold slice index for cross-validation')
+    parser.add_argument('--split_protocol', type=str, default='standard',
+                        choices=['standard', 'pals_3fold'],
+                        help='Crowdsourced-dataset fold protocol.')
+    parser.add_argument('--feature_extract_view', type=str, default='weak_only',
+                        choices=['weak_only', 'weak_strong_fusion'],
+                        help='View policy for epoch-level feature extraction.')
     # 核心算法开关
     parser.add_argument('--reliable_selection_mode', type=str, default='pals', choices=['mine', 'pals'], help="Strategy for reliable set selection.")
     
