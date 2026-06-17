@@ -45,6 +45,7 @@ from utils.cutout import Cutout
 from utils.autoaugment import CIFAR10Policy ,ImageNetPolicy
 # from utils.prototype_manager import PrototypeManager
 # from utils.diagnostics import log_tri_consensus_diagnostics
+from data.dataset import CIFAR10Partial, CIFAR100Partial
 from data.crowdsource import *
 # 5. 创建采样器 (直接使用对齐后的列表)
 # 注意:sampling_weights_aligned 的长度必须等于 unified_dataset 的长度
