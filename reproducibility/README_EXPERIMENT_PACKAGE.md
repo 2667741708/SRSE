@@ -2,8 +2,8 @@
 
 This package is a clean code-and-command release for reproducing the current
 SRSE manuscript experiments. It intentionally excludes datasets, generated
-feature caches, training outputs, raw logs, checkpoints, machine-local launch
-wrappers, and absolute-path provenance manifests.
+feature caches, training outputs, raw logs, checkpoints, and machine-local
+launch wrappers.
 
 ## Contents
 
