@@ -282,6 +282,9 @@ def parse_args():
     # [恢复] max_w_model 参数 / Restored max_w_model parameter
     parser.add_argument('--max_w_model', type=float, default=1.0,
                         help='Maximum value for w_model (default: 1.0). Set 0.5 to cap model influence.')
+    parser.add_argument('--model_belief_view', type=str, default='weak_strong_avg',
+                        choices=['weak_strong_avg', 'weak_only'],
+                        help='Model belief used in reliable/salvage selection.')
 
     # ===========================================================================
     # [新增 / New] 自适应连续传播深度控制参数
