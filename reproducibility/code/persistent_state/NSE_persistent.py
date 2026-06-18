@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# WRITEBACK SOURCE AUDIT VERSION / 写回源审计版
 """
 bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model
 ====================================
@@ -284,8 +285,6 @@ from torchvision import datasets, transforms
 import random
 import logging
 import csv
-import json
-import shutil
 from PIL import Image
 try:
     from torch.amp import autocast as _autocast, GradScaler
@@ -325,7 +324,7 @@ def set_seed(seed):
 
 # In Section 0: 环境设置 (Environment Setup)
 
-def setup_logger(log_dir, filename="run.log", is_master=False, to_console=False, append=False):
+def setup_logger(log_dir, filename="run.log", is_master=False, to_console=False):
     """
     Modified to allow disabling console output explicitly.
     """
@@ -346,7 +345,7 @@ def setup_logger(log_dir, filename="run.log", is_master=False, to_console=False,
     log_file = os.path.join(log_dir, filename)
     
     # File Handler (Always active)
-    file_handler = logging.FileHandler(log_file, mode='a' if append else 'w')
+    file_handler = logging.FileHandler(log_file, mode='w')
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
     
@@ -357,137 +356,6 @@ def setup_logger(log_dir, filename="run.log", is_master=False, to_console=False,
         logger.addHandler(console_handler)
         
     return logger
-
-def _resolve_resume_checkpoint(args, log_dir):
-    resume_checkpoint = getattr(args, 'resume_checkpoint', '')
-    if resume_checkpoint:
-        return resume_checkpoint
-    if getattr(args, 'auto_resume', False):
-        latest_path = os.path.join(log_dir, 'latest.pt')
-        if os.path.exists(latest_path):
-            return latest_path
-    return None
-
-def _safe_torch_load(path, map_location):
-    try:
-        return torch.load(path, map_location=map_location, weights_only=False)
-    except TypeError:
-        return torch.load(path, map_location=map_location)
-
-def _rng_state_dict():
-    state = {
-        'python': random.getstate(),
-        'numpy': np.random.get_state(),
-        'torch': torch.get_rng_state(),
-    }
-    if torch.cuda.is_available():
-        state['cuda'] = torch.cuda.get_rng_state_all()
-    return state
-
-def _restore_rng_state(state):
-    if not state:
-        return
-    random.setstate(state['python'])
-    np.random.set_state(state['numpy'])
-    torch.set_rng_state(state['torch'])
-    if torch.cuda.is_available() and 'cuda' in state:
-        torch.cuda.set_rng_state_all(state['cuda'])
-
-def _prototype_state_dict(proto_manager):
-    return {
-        name: value.detach().cpu() if torch.is_tensor(value) else copy.deepcopy(value)
-        for name, value in vars(proto_manager).items()
-        if not name.startswith('__')
-    }
-
-def _load_prototype_state_dict(proto_manager, state, device):
-    if not state:
-        return
-    for name, value in state.items():
-        if torch.is_tensor(value):
-            setattr(proto_manager, name, value.to(device))
-        else:
-            setattr(proto_manager, name, value)
-
-def _temporal_state_dict(state_manager):
-    return {
-        name: value.detach().cpu() if torch.is_tensor(value) else copy.deepcopy(value)
-        for name, value in vars(state_manager).items()
-        if not name.startswith('__')
-    }
-
-def _load_temporal_state_dict(state_manager, state):
-    if not state:
-        return
-    for name, value in state.items():
-        setattr(state_manager, name, value)
-
-def _append_epoch_metrics(log_dir, metrics):
-    os.makedirs(log_dir, exist_ok=True)
-    csv_path = os.path.join(log_dir, 'epoch_metrics.csv')
-    jsonl_path = os.path.join(log_dir, 'epoch_metrics.jsonl')
-    fieldnames = list(metrics.keys())
-    write_header = not os.path.exists(csv_path)
-    with open(csv_path, 'a', newline='', encoding='utf-8') as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
-        if write_header:
-            writer.writeheader()
-        writer.writerow(metrics)
-    with open(jsonl_path, 'a', encoding='utf-8') as handle:
-        handle.write(json.dumps(metrics, ensure_ascii=False) + '\n')
-
-def _save_epoch_checkpoint(log_dir, epoch, args, encoder, classifier, optimizer, scheduler,
-                           proto_manager, state_manager, best_test_acc, test_acc, metrics, is_best=False):
-    os.makedirs(log_dir, exist_ok=True)
-    checkpoint = {
-        'epoch': int(epoch),
-        'next_epoch': int(epoch),
-        'args': vars(args),
-        'encoder': encoder.state_dict(),
-        'classifier': classifier.state_dict(),
-        'optimizer': optimizer.state_dict(),
-        'scheduler': scheduler.state_dict(),
-        'prototype_manager': _prototype_state_dict(proto_manager),
-        'temporal_state_manager': _temporal_state_dict(state_manager),
-        'best_test_acc': float(best_test_acc),
-        'test_acc': float(test_acc),
-        'metrics': metrics,
-        'rng_state': _rng_state_dict(),
-    }
-    epoch_path = os.path.join(log_dir, f'epoch_{epoch:04d}.pt')
-    latest_path = os.path.join(log_dir, 'latest.pt')
-    torch.save(checkpoint, epoch_path)
-    shutil.copyfile(epoch_path, latest_path)
-    if is_best:
-        shutil.copyfile(epoch_path, os.path.join(log_dir, 'best.pt'))
-    return epoch_path
-
-def apply_external_source_if_requested(args, dataset, logger, log_dir):
-    source_path = getattr(args, 'external_source_path', '')
-    if not source_path:
-        return False
-    path = os.path.abspath(source_path)
-    if not os.path.exists(path):
-        raise FileNotFoundError(f"External source prior not found: {path}")
-    if path.endswith('.npz'):
-        archive = np.load(path)
-        key = 'source_prior' if 'source_prior' in archive else archive.files[0]
-        source_prior = archive[key]
-    elif path.endswith('.npy'):
-        source_prior = np.load(path)
-    else:
-        source_prior = np.loadtxt(path, delimiter=',')
-    source_prior = np.asarray(source_prior, dtype=np.float32)
-    if not hasattr(dataset, 'soft_labels'):
-        raise AttributeError('Dataset does not expose soft_labels for external source replacement.')
-    if source_prior.shape != np.asarray(dataset.soft_labels).shape:
-        raise ValueError(f"External source shape {source_prior.shape} does not match soft_labels {np.asarray(dataset.soft_labels).shape}.")
-    dataset.soft_labels = source_prior.copy()
-    dataset.original_soft_labels = source_prior.copy()
-    os.makedirs(log_dir, exist_ok=True)
-    np.save(os.path.join(log_dir, 'external_source_prior.npy'), source_prior)
-    logger.info(f"Loaded external source prior from {path}")
-    return True
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Ultimate Hybrid PALS-SSL Framework with Three-Phase Training')
@@ -503,16 +371,12 @@ def parse_args():
     parser.add_argument('--seeds', type=int, nargs='+', default=[1], help='List of random seeds.')
     parser.add_argument('--num_workers', type=int, default=4, help='num workers')
     parser.add_argument('--cuda_dev', type=int, default=0, help='GPU to select')
-    parser.add_argument('--external_source_path', type=str, default='',
-                        help='Optional .npy/.npz/.csv source prior replacing generated candidate labels.')
     
     # 部分标签 (PLL) 设置
     parser.add_argument('--pr', type=float, default=0.05, help='partial ratio (q)')
     parser.add_argument('--nr', type=float, default=0.5, help='noise ratio (eta)')
     parser.add_argument('--lpi', type=int, default=10, help='Labels Per Image (LPI) for crowdsource NPLL conversion')
     parser.add_argument('--slice', type=int, default=1, choices=[1, 2, 3, 4, 5], help='Fold slice index for cross-validation')
-    parser.add_argument('--split_protocol', type=str, default='standard', choices=['standard', 'pals_3fold'],
-                        help='Crowdsourced-dataset fold protocol.')
     # 核心算法开关
     parser.add_argument('--reliable_selection_mode', type=str, default='pals', choices=['mine', 'pals'], help="Strategy for reliable set selection.")
     
@@ -522,12 +386,6 @@ def parse_args():
     parser.add_argument('--max_run_epochs', type=int, default=0,
                         help='Optional execution cap for smoke or epoch-level validation. '
                              'Keeps --epochs as the schedule horizon; 0 runs all epochs.')
-    parser.add_argument('--resume_checkpoint', type=str, default='',
-                        help='Checkpoint path to resume from.')
-    parser.add_argument('--auto_resume', action='store_true',
-                        help='Resume from latest.pt in the run directory when it exists.')
-    parser.add_argument('--checkpoint_every_epoch', action='store_true',
-                        help='Save epoch_XXXX.pt, latest.pt, best.pt, epoch_metrics.csv, and epoch_metrics.jsonl.')
     parser.add_argument('--batch_size', type=int, default=256, help='Training batch size.')
     parser.add_argument('--lr', type=float, default=0.05, help='Initial learning rate.')
     parser.add_argument('--wd', type=float, default=5e-4, help='Weight decay.')
@@ -542,13 +400,9 @@ def parse_args():
     parser.add_argument('--mixup_alpha', type=float, default=1.0, help='Alpha for Mixup.')
     parser.add_argument('--lsr', type=float, default=0.5, help='Label smoothing rate.')
     parser.add_argument('--consistency_weight', type=float, default=1.0, help='Weight for consistency loss.')
-    parser.add_argument('--feature_extract_view', type=str, default='weak_strong_fusion',
-                        choices=['weak_only', 'weak_strong_fusion'],
-                        help='Image view used for feature extraction.')
 
     # --- 🚀 消融实验开关 (Ablation Study Flags) ---
     parser.add_argument('--no_reliable_mixup', action='store_true', help='[Ablation] Disable Mixup on reliable set.')
-    parser.add_argument('--ablate_no_cr', action='store_true', help='[Ablation] Disable consistency regularization on the strong view.')
     parser.add_argument('--no_rebalance', action='store_true', help='[Ablation] Disable class rebalancing on pseudo-labels.')
     parser.add_argument('--no_softmatch', action='store_true', help='[Ablation] Disable SoftMatch weighting (force weight=1.0).')
     parser.add_argument('--no_unreliable_mixup', action='store_true', help='[Ablation] Disable Mixup on unreliable set (use standard consistency).')
@@ -1397,7 +1251,9 @@ def reliable_pseudolabel_selection_advanced(logger, args, device, trainloader, f
     eps_stable = 1e-8
 
     # 获取原始静态约束 (PLL 硬掩码)
-    if hasattr(dataset, 'original_soft_labels'):
+    if hasattr(dataset, 'mutable_source_prior'):
+        static_cand_mask = torch.tensor(dataset.mutable_source_prior, device=device, dtype=torch.float64)
+    elif hasattr(dataset, 'original_soft_labels'):
         static_cand_mask = torch.tensor(dataset.original_soft_labels, device=device, dtype=torch.float64)
     else:
         static_cand_mask = torch.tensor(dataset.soft_labels, device=device, dtype=torch.float64)
@@ -1409,7 +1265,7 @@ def reliable_pseudolabel_selection_advanced(logger, args, device, trainloader, f
         crowd_prior = torch.tensor(dataset.weights, device=device, dtype=torch.float32) + eps_stable
 
     # 获取当前动态起点与干净标签
-    current_fixed_labels = torch.tensor(dataset.soft_labels, device=device).float()
+    current_fixed_labels = torch.tensor(dataset.mutable_source_prior if hasattr(dataset, 'mutable_source_prior') else dataset.soft_labels, device=device).float()
     clean_labels = torch.tensor(dataset.clean_labels, device=device, dtype=torch.long)
 
     # ==============================================================================
@@ -1500,8 +1356,8 @@ def reliable_pseudolabel_selection_advanced(logger, args, device, trainloader, f
 
     # [直接计算 r_i, 基于 KNN 和模型置信度] — 遵循用户公式
     adap_eps  = float(getattr(args, 'adap_rel_eps', 1e-12))
-    # adap_gamma = float(getattr(args, 'adap_rel_gamma', 2.0))
-    # ce_direction = getattr(args, 'adap_ce_direction', 'knn_over_model')
+    # adap_gamma = float(2.0)
+    # ce_direction = 'knn_over_model'
     # num_classes = args.num_classes
 
     model_warmup_epochs = float(getattr(args, 'model_warmup_epochs', 10))
@@ -1522,7 +1378,10 @@ def reliable_pseudolabel_selection_advanced(logger, args, device, trainloader, f
         conf_model = p_model_raw.max(dim=1)[0]
 
         # r_i = conf_knn / (conf_knn + conf_model + eps)
-        r_i = (conf_knn / (conf_knn + conf_model + adap_eps)).unsqueeze(1)
+        if bool(getattr(args, 'ablate_uniform_ri', False)):
+            r_i = torch.full((N, 1), 0.5, device=p_knn1.device, dtype=p_knn1.dtype)
+        else:
+            r_i = (conf_knn / (conf_knn + conf_model + adap_eps)).unsqueeze(1)
         # -----------------------------
     else:
         p_model_effective = p_knn1.clone()
@@ -1542,7 +1401,15 @@ def reliable_pseudolabel_selection_advanced(logger, args, device, trainloader, f
         logger.info(f"✨ [Refine Branch] force_old_branch=True -> r_i forced to 1.0 for {_dataset_name}")
 
     # 保留数据先验 (omega) 对模型预测的约束
-    prior_effective  =  (p_model_effective * omega) / ((p_model_effective * omega).sum(dim=1, keepdim=True) + adap_eps)
+    no_candidate_prior = bool(getattr(args, 'ablate_no_candidate_prior', False))
+    logger.info(
+        f"[AblationCheck] candidate_prior={not no_candidate_prior} | "
+        f"sim_mode_2={args.sim_mode_2} | max_w_model={max_w_model_val:.4f}"
+    )
+    if no_candidate_prior:
+        prior_effective = p_model_effective
+    else:
+        prior_effective  =  (p_model_effective * omega) / ((p_model_effective * omega).sum(dim=1, keepdim=True) + adap_eps)
 
     # fused_blend = r_i * P_knn + (1 - r_i) * prior_effective
     fused_blend = r_i * p_knn1 + (1.0 - r_i) * prior_effective
@@ -1601,46 +1468,66 @@ def reliable_pseudolabel_selection_advanced(logger, args, device, trainloader, f
 
 
 @torch.no_grad()
-def get_features(encoder, classifier, loader, device, feature_extract_view='weak_only'):
+def get_features(encoder, classifier, loader, device, return_source_views=False, source_num_views=3):
     encoder.eval(); classifier.eval(); all_features, all_predictions, all_indices = [], [], []
+    all_weak_predictions, all_strong_predictions = [], []
     for images_dual, indices in loader:
-        if isinstance(images_dual, (tuple, list)):
-            # Legacy path: a tuple of (weak_imgs, strong_imgs)
-            weak_imgs = images_dual[0]
-            strong_imgs = images_dual[1] if len(images_dual) > 1 else None
-        else:
-            # Weak-only feature-screening path.
-            weak_imgs = images_dual
-            strong_imgs = None
+        # images_dual is a tuple of (weak_imgs, strong_imgs)
+        weak_imgs, strong_imgs = images_dual
         weak_imgs = weak_imgs.to(device, non_blocking=True)
+        model_belief_view = getattr(loader, 'model_belief_view', 'weak_strong_avg')
+        if model_belief_view != 'weak_only':
+            strong_imgs = strong_imgs.to(device, non_blocking=True)
 
         with autocast():
-            # SRSE screening uses weak-view features for KNN topology. The default
-            # path also uses weak-view predictions to avoid a second global
-            # strong-view forward before active-set construction.
+            # KNN topology always uses weak-view features.
             feat_w = encoder(weak_imgs)
             pred_w = F.softmax(classifier(feat_w), dim=1)
 
-            if feature_extract_view == 'weak_strong_fusion':
-                if strong_imgs is None:
-                    raise ValueError('feature_extract_view=weak_strong_fusion requires strong-view batches.')
-                strong_imgs = strong_imgs.to(device, non_blocking=True)
+            if model_belief_view == 'weak_only':
+                p_fused = pred_w
+            else:
                 feat_s = encoder(strong_imgs)
                 pred_s = F.softmax(classifier(feat_s), dim=1)
-                p_model = (pred_w + pred_s) / 2
-            else:
-                p_model = pred_w
+                # P_model_fusion = (P_model_strong + P_model_weak) / 2
+                p_fused = (pred_w + pred_s) / 2
 
         # 仍然使用弱增强视图的特征用于 KNN 拓扑构建
         all_features.append(F.normalize(feat_w.float()))
-        all_predictions.append(p_model.float())
+        all_predictions.append(p_fused.float())
+        if return_source_views:
+            all_weak_predictions.append(pred_w.float())
+            all_strong_predictions.append((pred_s if model_belief_view != 'weak_only' else pred_w).float())
         all_indices.append(indices.cpu())
 
     all_features = torch.cat(all_features)
     all_predictions = torch.cat(all_predictions)
     all_indices = torch.cat(all_indices)
+    order = torch.argsort(all_indices)
 
-    return all_features[torch.argsort(all_indices)], all_predictions[torch.argsort(all_indices)]
+    if not return_source_views:
+        return all_features[order], all_predictions[order]
+
+    source_views = [
+        torch.cat(all_weak_predictions)[order],
+        torch.cat(all_strong_predictions)[order],
+    ]
+    while len(source_views) < max(1, int(source_num_views)):
+        extra_predictions, extra_indices = [], []
+        for images_dual, indices in loader:
+            weak_imgs, strong_imgs = images_dual
+            use_strong = (len(source_views) % 2 == 1)
+            imgs = strong_imgs if use_strong else weak_imgs
+            imgs = imgs.to(device, non_blocking=True)
+            with autocast():
+                pred = F.softmax(classifier(encoder(imgs)), dim=1)
+            extra_predictions.append(pred.float())
+            extra_indices.append(indices.cpu())
+        extra_predictions = torch.cat(extra_predictions)
+        extra_indices = torch.cat(extra_indices)
+        source_views.append(extra_predictions[torch.argsort(extra_indices)])
+
+    return all_features[order], all_predictions[order], source_views[:max(1, int(source_num_views))]
 
 class SoftMatchWeightManager:
     def __init__(self, num_samples, num_classes, n_sigma=2.0, momentum=0.99, device='cuda'): self.n_sigma, self.momentum, self.device = n_sigma, momentum, device; self.prob_model = torch.ones(num_samples, num_classes, device=device) / num_classes
@@ -1696,20 +1583,20 @@ def knn_search_pytorch_chunked(feats, k, num_heads=1, chunk_size=4096):
         torch.backends.cuda.matmul.allow_tf32 = original_matmul_precision
 
 def get_adaptive_affinity_matrix(raw_D, neighbors_indices, current_soft_labels, args):
-    att_temp = getattr(args, 'daes_spatial_temp', 0.5)
+    att_temp = 0.5
     spatial_weights = F.softmax(raw_D / att_temp, dim=1).unsqueeze(-1)
     neighbor_labels = F.embedding(neighbors_indices, current_soft_labels)
 
     local_mean_raw = (neighbor_labels * spatial_weights).sum(dim=1)
 
-    base_tau = getattr(args, 'daes_base_tau', 0.1)
-    entropy_coeff = getattr(args, 'daes_entropy_coeff', 0.5)
+    base_tau = 0.1
+    entropy_coeff = float(getattr(args, 'daes_entropy_coeff', 0.5))
 
     local_entropy = -torch.sum(local_mean_raw * torch.log(local_mean_raw + 1e-8), dim=1)
     norm_entropy = local_entropy / np.log(args.num_classes)
     tau_dynamic = (base_tau + (torch.pow(norm_entropy, 2) * entropy_coeff)).unsqueeze(1)
 
-    sim_power = getattr(args, 'daes_sim_power', 2.0)
+    sim_power = 2.0
     scaled_sim = torch.pow(raw_D, sim_power) / tau_dynamic
 
     max_val, _ = scaled_sim.max(dim=1, keepdim=True)
@@ -1730,8 +1617,7 @@ def get_weight_matrix(mode, raw_D, neighbors_indices, ref_soft_labels, args):
             rel_mode=getattr(args, 'topology_rel_mode', 'masked_entropy'),
             gamma=getattr(args, 'topology_rel_gamma', 2.0),
             eps=getattr(args, 'topology_rel_eps', 1e-12),
-            kl_self_mode=getattr(args, 'kl_self_mode', 'with_self'),
-            support_ref=getattr(args, 'topology_support_ref', 2.0),
+            kl_self_mode='with_self',
         )
     elif mode == 'topology_daes':
         refined_D = get_topology_daes_affinity(raw_D, neighbors_indices, ref_soft_labels, args)
@@ -1747,24 +1633,27 @@ def train_unified_single_stream(args, encoder, classifier, device,
                                 unified_loader, optimizer,
                                 logger, num_classes, global_labels,
                                 global_is_reliable, proto_manager=None):
-    """Train strictly on the epoch-local active set.
+    """Train strictly on the active set only.
 
-    `global_is_reliable` marks the active set A_t = reliable samples plus
-    promoted salvage samples. Non-active samples must not enter this training
-    path: no pseudo-target, no MixUp, no consistency/self-training loss.
+    Persistent-state proxies may add persistent promotions to the active set,
+    but ordinary non-active samples must not be pseudo-targeted, mixed,
+    forwarded, or used by a consistency/self-training loss.
     """
     encoder.train()
     classifier.train()
     scaler = GradScaler()
+    reliable_mixup_enabled = not bool(getattr(args, 'ablate_no_reliable_mixup', False))
+    no_cr = bool(getattr(args, 'ablate_no_cr', False))
+    logger.info(f"[AblationCheck] active_mixup={reliable_mixup_enabled} | reliable_mixup={reliable_mixup_enabled}")
+    if no_cr:
+        logger.info(
+            f"[AblationCheck] cr=False | active_views=strong_only | "
+            f"active_mixup={reliable_mixup_enabled} | NonActiveTrain=0"
+        )
 
     total_loss_s = 0.0
     num_sup = 0
     active_batch_count = 0
-    reliable_mixup_enabled = not (
-        getattr(args, 'ablate_no_reliable_mixup', False)
-        or getattr(args, 'no_reliable_mixup', False)
-    )
-    no_cr = bool(getattr(args, 'ablate_no_cr', False))
 
     for batch_data in unified_loader:
         weak_imgs, strong_imgs, indices = batch_data
@@ -1832,11 +1721,6 @@ def train_unified_single_stream(args, encoder, classifier, device,
             num_sup += B_s
 
     avg_loss_s = total_loss_s / num_sup if num_sup > 0 else 0
-    if no_cr:
-        logger.info(
-            f"  -> [AblationCheck] cr=False | active_views=strong_only | "
-            f"active_mixup={reliable_mixup_enabled} | NonActiveTrain=0"
-        )
     logger.info(
         f"  -> [Train Loss] ActiveSup={avg_loss_s:.4f} | "
         f"ActiveBatches={active_batch_count} | NonActiveTrain=0."
@@ -1899,6 +1783,899 @@ def log_tri_consensus_diagnostics(logger, epoch, true_labels,
     else:
         acc_grand = 0.0
     logger.info(f"  └─ 🌟 Grand Consensus (All 3 agree): {num_grand} samples | Acc={acc_grand:.2f}%")
+
+def _normalize_np_rows(arr, eps=1e-12):
+    arr = np.asarray(arr, dtype=np.float64)
+    arr = np.clip(arr, 0.0, None)
+    row_sum = arr.sum(axis=1, keepdims=True)
+    empty = row_sum.squeeze(1) <= eps
+    if np.any(empty):
+        arr[empty] = 1.0 / arr.shape[1]
+        row_sum = arr.sum(axis=1, keepdims=True)
+    return arr / np.maximum(row_sum, eps)
+
+
+def _log_source_and_active_quality(logger, tag, source_prior, clean_labels, active_mask=None, active_labels=None):
+    labels_np = np.asarray(clean_labels, dtype=np.int64)
+    src = _normalize_np_rows(source_prior)
+    true_mass = src[np.arange(len(labels_np)), labels_np]
+    support = src > 1e-12
+    hard_contam = 1.0 - support[np.arange(len(labels_np)), labels_np].mean()
+    soft_contam = 1.0 - float(true_mass.mean())
+    logger.info(
+        f"[SourceAudit] {tag} | hard_contamination={hard_contam:.6f} | "
+        f"soft_contamination={soft_contam:.6f} | true_mass_mean={float(true_mass.mean()):.6f}"
+    )
+    if active_mask is not None and active_labels is not None:
+        mask_np = np.asarray(active_mask, dtype=bool)
+        if mask_np.any():
+            pred_np = np.asarray(active_labels, dtype=np.int64)
+            precision = float((pred_np[mask_np] == labels_np[mask_np]).mean())
+            coverage = float(mask_np.mean())
+        else:
+            precision = 0.0
+            coverage = 0.0
+        logger.info(
+            f"[ExtractionAudit] {tag} | active_precision={precision:.6f} | "
+            f"active_coverage={coverage:.6f} | active_count={int(mask_np.sum())}"
+        )
+
+
+
+def _get_initial_clean_noisy_masks(dataset, eps=1e-12):
+    labels_np = np.asarray(dataset.clean_labels, dtype=np.int64)
+    base = _normalize_np_rows(dataset.original_soft_labels if hasattr(dataset, 'original_soft_labels') else dataset.soft_labels)
+    support = base > eps
+    clean0 = support[np.arange(len(labels_np)), labels_np]
+    noisy0 = ~clean0
+    return clean0, noisy0
+
+
+def _candidate_membership_insert_mask(prior, scores, eligible_mask, margin=0.0, eps=1e-12):
+    prior = _normalize_np_rows(prior, eps=eps)
+    scores = _normalize_np_rows(scores, eps=eps)
+    eligible_mask = np.asarray(eligible_mask, dtype=bool)
+    support = prior > eps
+    pseudo = scores.argmax(axis=1).astype(np.int64)
+    conf = scores[np.arange(scores.shape[0]), pseudo]
+    pseudo_in_candidate = support[np.arange(scores.shape[0]), pseudo]
+    supported_scores = np.where(support, scores, -np.inf)
+    best_candidate = supported_scores.max(axis=1)
+    no_candidate = ~np.isfinite(best_candidate)
+    best_candidate = np.where(no_candidate, -np.inf, best_candidate)
+    return eligible_mask & (~pseudo_in_candidate) & (conf >= best_candidate + float(margin))
+
+
+def _fredis_candidate_moves(prior, scores, eligible_mask, refine_threshold=1e-2, disamb_threshold=0.8,
+                            refine_min_conf=0.0, disamb_max_conf=1.0, top_non_candidate_only=False, eps=1e-12):
+    prior = _normalize_np_rows(prior, eps=eps)
+    scores = _normalize_np_rows(scores, eps=eps)
+    eligible_mask = np.asarray(eligible_mask, dtype=bool)
+    support = prior > eps
+    pseudo = scores.argmax(axis=1).astype(np.int64)
+    top_score = scores[np.arange(scores.shape[0]), pseudo]
+    diff_from_pred = top_score[:, None] - scores
+
+    if top_non_candidate_only:
+        refine_mask = np.zeros_like(support, dtype=bool)
+        non_candidate_scores = np.where(~support, scores, -np.inf)
+        top_non_candidate = non_candidate_scores.argmax(axis=1).astype(np.int64)
+        top_non_score = non_candidate_scores[np.arange(scores.shape[0]), top_non_candidate]
+        top_non_diff = diff_from_pred[np.arange(scores.shape[0]), top_non_candidate]
+        can_refine = (
+            eligible_mask
+            & np.isfinite(top_non_score)
+            & (top_non_score >= float(refine_min_conf))
+            & (top_non_diff <= float(refine_threshold))
+        )
+        refine_mask[np.where(can_refine)[0], top_non_candidate[can_refine]] = True
+    else:
+        refine_mask = (
+            (~support)
+            & eligible_mask[:, None]
+            & (scores >= float(refine_min_conf))
+            & (diff_from_pred <= float(refine_threshold))
+        )
+    disamb_mask = (
+        support
+        & eligible_mask[:, None]
+        & (scores <= float(disamb_max_conf))
+        & (diff_from_pred >= float(disamb_threshold))
+    )
+
+    # FREDIS removes labels at instance-label level, but a training source cannot
+    # become empty. Keep the highest-scoring original candidate if all candidates
+    # for a sample would be removed.
+    for row_idx in np.where(eligible_mask)[0]:
+        supported = np.where(support[row_idx])[0]
+        if supported.size and np.all(disamb_mask[row_idx, supported]):
+            keep_label = supported[np.argmax(scores[row_idx, supported])]
+            disamb_mask[row_idx, keep_label] = False
+    return refine_mask, disamb_mask
+
+
+def _cap_fredis_refinement_by_disambiguation(refine_mask, disamb_mask, scores, min_disamb_over_refine=1.0):
+    ratio = float(min_disamb_over_refine)
+    if ratio <= 0:
+        return refine_mask
+    refine_count = int(refine_mask.sum())
+    disamb_count = int(disamb_mask.sum())
+    max_refine = int(disamb_count // ratio) if ratio > 0 else refine_count
+    if refine_count <= max_refine:
+        return refine_mask
+    capped = np.zeros_like(refine_mask, dtype=bool)
+    if max_refine <= 0:
+        return capped
+    row_idx, label_idx = np.where(refine_mask)
+    # Keep the strongest refinement labels first. This is deterministic and
+    # follows FREDIS' intent that refined labels are a controlled subset.
+    order = np.argsort(-scores[row_idx, label_idx], kind='mergesort')[:max_refine]
+    capped[row_idx[order], label_idx[order]] = True
+    return capped
+
+
+def _take_random_instance_labels(row_idx, label_idx, max_count):
+    max_count = int(max_count)
+    if max_count <= 0 or len(row_idx) <= max_count:
+        return row_idx, label_idx
+    order = list(range(len(row_idx)))
+    random.shuffle(order)
+    order = np.asarray(order[:max_count], dtype=np.int64)
+    return row_idx[order], label_idx[order]
+
+
+def _fredis_full_candidate_update(args, dataset, prior, scores, eligible_mask, eps=1e-12):
+    prior = _normalize_np_rows(prior, eps=eps)
+    scores = _normalize_np_rows(scores, eps=eps)
+    eligible_mask = np.asarray(eligible_mask, dtype=bool)
+    support = prior > eps
+
+    if not hasattr(dataset, '_fredis_full_theta'):
+        dataset._fredis_full_theta = float(getattr(args, 'fredis_full_theta', 1e-6))
+    if not hasattr(dataset, '_fredis_full_delta'):
+        dataset._fredis_full_delta = float(getattr(args, 'fredis_full_delta', 1.0))
+
+    theta = float(dataset._fredis_full_theta)
+    delta = float(dataset._fredis_full_delta)
+    inc = float(getattr(args, 'fredis_full_inc', 1e-6))
+    dec = float(getattr(args, 'fredis_full_dec', 1e-6))
+    times = float(getattr(args, 'fredis_full_times', 2.0))
+    change_size = int(getattr(args, 'fredis_full_change_size', 500))
+    theta_end = float(getattr(args, 'fredis_full_theta_end', 0.9))
+    delta_end = float(getattr(args, 'fredis_full_delta_end', 0.1))
+
+    top_score = scores.max(axis=1, keepdims=True)
+    tmp_diff = top_score - scores
+    eligible_cols = eligible_mask[:, None]
+
+    refine_candidates = (~support) & eligible_cols & (tmp_diff < theta)
+    refine_rows, refine_labels = np.where(refine_candidates)
+    raw_refine_count = int(len(refine_rows))
+    refine_mask = np.zeros_like(support, dtype=bool)
+    selected_refine_count = raw_refine_count
+    if raw_refine_count:
+        refine_rows, refine_labels = _take_random_instance_labels(refine_rows, refine_labels, change_size)
+        selected_refine_count = int(len(refine_rows))
+        refine_mask[refine_rows, refine_labels] = True
+
+    disamb_candidates = support & eligible_cols & (tmp_diff > delta)
+    disamb_count = int(disamb_candidates.sum())
+    target_disamb = int(selected_refine_count * times)
+    if selected_refine_count > 0 and disamb_count < target_disamb and dec > 0:
+        candidate_diffs = tmp_diff[support & eligible_cols]
+        if candidate_diffs.size:
+            needed = min(max(1, target_disamb), int(candidate_diffs.size))
+            kth = np.partition(candidate_diffs, candidate_diffs.size - needed)[candidate_diffs.size - needed]
+            if delta >= kth:
+                steps = int(math.floor((delta - kth) / dec)) + 1
+                delta = delta - steps * dec
+            disamb_candidates = support & eligible_cols & (tmp_diff > delta)
+            disamb_count = int(disamb_candidates.sum())
+
+    disamb_rows, disamb_labels = np.where(disamb_candidates)
+    max_disamb = int(change_size * times) if change_size > 0 else 0
+    selected_disamb_count = disamb_count
+    disamb_mask = np.zeros_like(support, dtype=bool)
+    if disamb_count:
+        disamb_rows, disamb_labels = _take_random_instance_labels(disamb_rows, disamb_labels, max_disamb)
+        selected_disamb_count = int(len(disamb_rows))
+        disamb_mask[disamb_rows, disamb_labels] = True
+
+    final_support = support.copy()
+    final_support[refine_mask] = True
+    final_support[disamb_mask] = False
+    empty_rows = eligible_mask & (final_support.sum(axis=1) == 0)
+    if empty_rows.any():
+        final_support[empty_rows] = support[empty_rows]
+        refine_mask[empty_rows] = False
+        disamb_mask[empty_rows] = False
+
+    label_change_count = int(np.not_equal(support, final_support).sum())
+    if theta < theta_end and delta > delta_end and label_change_count < change_size:
+        theta = theta + inc
+        delta = delta - dec
+    dataset._fredis_full_theta = theta
+    dataset._fredis_full_delta = delta
+
+    masked_scores = scores * final_support.astype(np.float64)
+    empty_score_rows = masked_scores.sum(axis=1) <= eps
+    if empty_score_rows.any():
+        masked_scores[empty_score_rows] = final_support[empty_score_rows].astype(np.float64)
+    full_prior = _normalize_np_rows(masked_scores, eps=eps)
+
+    metrics = dict(
+        FREDISFullTheta=float(theta),
+        FREDISFullDelta=float(delta),
+        FREDISFullRawRefineLabels=raw_refine_count,
+        FREDISFullRefineLabels=int(refine_mask.sum()),
+        FREDISFullRawDisambLabels=disamb_count,
+        FREDISFullDisambLabels=int(disamb_mask.sum()),
+        FREDISFullLabelChanges=label_change_count,
+    )
+    return refine_mask, disamb_mask, final_support, full_prior, metrics
+
+
+def _irnet_candidate_correction(prior, scores, eligible_mask, tau_boundary=0.0, min_non_candidate_conf=0.0, eps=1e-12):
+    prior = _normalize_np_rows(prior, eps=eps)
+    scores = _normalize_np_rows(scores, eps=eps)
+    eligible_mask = np.asarray(eligible_mask, dtype=bool)
+    support = prior > eps
+
+    candidate_scores = np.where(support, scores, -np.inf)
+    non_candidate_scores = np.where(~support, scores, -np.inf)
+    best_candidate = candidate_scores.max(axis=1)
+    best_non_candidate = non_candidate_scores.max(axis=1)
+    insert_labels = non_candidate_scores.argmax(axis=1).astype(np.int64)
+    tau = best_candidate - best_non_candidate
+    valid_non_candidate = np.isfinite(best_non_candidate)
+    insert_mask = (
+        eligible_mask
+        & valid_non_candidate
+        & (tau < float(tau_boundary))
+        & (best_non_candidate >= float(min_non_candidate_conf))
+    )
+    return insert_mask, insert_labels, tau
+
+
+def _irnet_full_current_threshold(args, epoch):
+    start_epoch = int(getattr(args, 'source_update_start_epoch', -1))
+    if start_epoch < 0:
+        start_epoch = int(getattr(args, 'model_warmup_epochs', 10)) + 1
+    total = max(1, int(getattr(args, 'epochs', 1)) - start_epoch)
+    progress = min(1.0, max(0.0, ((epoch + 1) - start_epoch) / total))
+    start = float(getattr(args, 'irnet_full_threshold_start', 0.008))
+    end = float(getattr(args, 'irnet_full_threshold_end', 0.008))
+    return start + (end - start) * progress
+
+
+def _irnet_full_candidate_correction(prior, score_views, eligible_mask, threshold=0.008, correct_deletion=False, eps=1e-12):
+    prior = _normalize_np_rows(prior, eps=eps)
+    support = prior > eps
+    eligible_mask = np.asarray(eligible_mask, dtype=bool)
+    views = [_normalize_np_rows(v, eps=eps) for v in score_views]
+    if not views:
+        raise ValueError('irnet_full requires at least one score view')
+
+    non_labels = []
+    non_values = []
+    tau_values = []
+    select_mask = eligible_mask.copy()
+    valid_non = np.zeros_like(eligible_mask, dtype=bool)
+    for scores in views:
+        candidate_scores = np.where(support, scores, -np.inf)
+        non_candidate_scores = np.where(~support, scores, -np.inf)
+        best_candidate = candidate_scores.max(axis=1)
+        best_non_candidate = non_candidate_scores.max(axis=1)
+        best_non_label = non_candidate_scores.argmax(axis=1).astype(np.int64)
+        valid = np.isfinite(best_non_candidate)
+        valid_non |= valid
+        select_mask &= valid & (best_non_candidate > best_candidate + float(threshold))
+        non_labels.append(best_non_label)
+        non_values.append(best_non_candidate)
+        tau_values.append(best_candidate - best_non_candidate)
+
+    first_label = non_labels[0]
+    for label in non_labels[1:]:
+        select_mask &= (label == first_label)
+
+    delete_labels = np.full(prior.shape[0], -1, dtype=np.int64)
+    if correct_deletion:
+        first_scores = views[0]
+        candidate_scores = np.where(support, first_scores, np.inf)
+        delete_labels = candidate_scores.argmin(axis=1).astype(np.int64)
+        has_candidate = np.isfinite(candidate_scores.min(axis=1))
+        select_mask &= has_candidate
+
+    return (
+        select_mask,
+        first_label,
+        np.asarray(non_values[0], dtype=np.float64),
+        delete_labels,
+        np.asarray(tau_values[0], dtype=np.float64),
+        int(valid_non.sum()),
+    )
+
+
+def _persistent_promotion_candidates(native_prior, scores, active_mask, estimated_noise_mask, scope='none',
+                                     label_space='all', threshold=0.95, eps=1e-12):
+    native_prior = _normalize_np_rows(native_prior, eps=eps)
+    scores = _normalize_np_rows(scores, eps=eps)
+    active_mask = np.asarray(active_mask, dtype=bool)
+    estimated_noise_mask = np.asarray(estimated_noise_mask, dtype=bool)
+    tau = float(threshold)
+
+    if label_space == 'all':
+        pseudo = scores.argmax(axis=1).astype(np.int64)
+        conf = scores[np.arange(scores.shape[0]), pseudo]
+    elif label_space == 'non_candidate':
+        support = native_prior > eps
+        non_candidate_scores = np.where(~support, scores, -np.inf)
+        pseudo = non_candidate_scores.argmax(axis=1).astype(np.int64)
+        conf = non_candidate_scores[np.arange(scores.shape[0]), pseudo]
+    else:
+        raise ValueError(f'Unsupported promotion_label_space={label_space}')
+
+    if scope == 'all_highconf':
+        candidate_mask = conf >= tau
+    elif scope == 'unreliable_highconf':
+        candidate_mask = (~active_mask) & (conf >= tau)
+    elif scope == 'nse_estimated_noise_highconf':
+        candidate_mask = estimated_noise_mask & (conf >= tau)
+    elif scope == 'none':
+        candidate_mask = np.zeros(scores.shape[0], dtype=bool)
+    else:
+        raise ValueError(f'Unsupported promotion_scope={scope}')
+    candidate_mask &= np.isfinite(conf)
+    return candidate_mask, pseudo, conf
+
+
+def _pico_soft_target_update(prior, scores, alpha=0.1, candidate_constrained=False, eps=1e-12):
+    prior = _normalize_np_rows(prior, eps=eps)
+    scores = _normalize_np_rows(scores, eps=eps)
+    if candidate_constrained:
+        support = prior > eps
+        target = np.where(support, scores, 0.0)
+        empty = target.sum(axis=1) <= eps
+        if np.any(empty):
+            target[empty] = scores[empty]
+        target = _normalize_np_rows(target, eps=eps)
+    else:
+        target = scores
+    alpha = float(alpha)
+    return _normalize_np_rows((1.0 - alpha) * prior + alpha * target, eps=eps)
+
+
+def _soft_mass_state_metrics(base, work, labels_np, clean0, noisy0):
+    base_true_mass = base[np.arange(len(labels_np)), labels_np]
+    work_true_mass = work[np.arange(len(labels_np)), labels_np]
+    mass_rec_n = float(work_true_mass[noisy0].mean()) if noisy0.any() else 0.0
+    damage_mass = float(np.maximum(0.0, base_true_mass[clean0] - work_true_mass[clean0]).mean()) if clean0.any() else 0.0
+    return dict(mass_rec_n=mass_rec_n, damage_mass=damage_mass)
+
+
+def _update_source_drift_auc(dataset, source_drift):
+    dataset.source_drift_auc_sum = float(getattr(dataset, 'source_drift_auc_sum', 0.0)) + float(source_drift)
+    dataset.source_drift_auc_count = int(getattr(dataset, 'source_drift_auc_count', 0)) + 1
+    return dataset.source_drift_auc_sum / max(dataset.source_drift_auc_count, 1)
+
+
+def _source_state_metrics(dataset, eps=1e-12):
+    labels_np = np.asarray(dataset.clean_labels, dtype=np.int64)
+    base = _normalize_np_rows(dataset.original_soft_labels if hasattr(dataset, 'original_soft_labels') else dataset.soft_labels)
+    work = _normalize_np_rows(dataset.mutable_source_prior if hasattr(dataset, 'mutable_source_prior') else base)
+    clean0, noisy0 = _get_initial_clean_noisy_masks(dataset, eps=eps)
+    support = work > eps
+    true_in_support = support[np.arange(len(labels_np)), labels_np]
+    src_rec_n = float(true_in_support[noisy0].mean()) if noisy0.any() else 0.0
+    clean_damage = 1.0 - float(true_in_support[clean0].mean()) if clean0.any() else 0.0
+    drift = float(np.abs(work - base).sum(axis=1).mean())
+    soft_contam = 1.0 - float(work[np.arange(len(labels_np)), labels_np].mean())
+    hard_contam = 1.0 - float(true_in_support.mean())
+    mass_metrics = _soft_mass_state_metrics(base, work, labels_np, clean0, noisy0)
+    return dict(src_rec_n=src_rec_n, clean_damage=clean_damage, source_drift=drift,
+                soft_contamination=soft_contam, hard_contamination=hard_contam,
+                clean0_count=int(clean0.sum()), noisy0_count=int(noisy0.sum()),
+                **mass_metrics)
+
+
+def _mask_precision_coverage(mask, pred, labels_np):
+    mask = np.asarray(mask, dtype=bool)
+    pred = np.asarray(pred, dtype=np.int64)
+    if mask.any():
+        precision = float((pred[mask] == labels_np[mask]).mean())
+    else:
+        precision = 0.0
+    return precision, float(mask.mean()), int(mask.sum())
+
+
+def _noisy_recovery(mask, pred, labels_np, noisy0):
+    mask = np.asarray(mask, dtype=bool)
+    pred = np.asarray(pred, dtype=np.int64)
+    denom = int(np.asarray(noisy0, dtype=bool).sum())
+    if denom == 0:
+        return 0.0
+    good = noisy0 & mask & (pred == labels_np)
+    return float(good.sum() / denom)
+
+
+def _subset_active_metrics(subset_mask, active_mask, active_labels, labels_np):
+    subset_mask = np.asarray(subset_mask, dtype=bool)
+    active_mask = np.asarray(active_mask, dtype=bool)
+    active_labels = np.asarray(active_labels, dtype=np.int64)
+    denom = int(subset_mask.sum())
+    if denom == 0:
+        return 0.0, 0.0, 0
+    selected = subset_mask & active_mask
+    count = int(selected.sum())
+    coverage = float(count / denom)
+    precision = float((active_labels[selected] == labels_np[selected]).mean()) if count else 0.0
+    return coverage, precision, count
+
+
+def _log_mvp_extraction_metrics(logger, tag, dataset, reliable_mask, reliable_labels, salvage_mask, salvage_labels, active_mask, active_labels):
+    labels_np = np.asarray(dataset.clean_labels, dtype=np.int64)
+    clean0, noisy0 = _get_initial_clean_noisy_masks(dataset)
+    r_prec, r_cov, r_count = _mask_precision_coverage(reliable_mask, reliable_labels, labels_np)
+    s_prec, s_cov, s_count = _mask_precision_coverage(salvage_mask, salvage_labels, labels_np)
+    a_prec, a_cov, a_count = _mask_precision_coverage(active_mask, active_labels, labels_np)
+    nrr_r = _noisy_recovery(reliable_mask, reliable_labels, labels_np, noisy0)
+    nrr_s = _noisy_recovery(salvage_mask, salvage_labels, labels_np, noisy0)
+    nrr_a = _noisy_recovery(active_mask, active_labels, labels_np, noisy0)
+    clean_cov_a, clean_prec_a, clean_count_a = _subset_active_metrics(clean0, active_mask, active_labels, labels_np)
+    noisy_cov_a, noisy_prec_a, noisy_count_a = _subset_active_metrics(noisy0, active_mask, active_labels, labels_np)
+    logger.info(
+        f"[MVPExtraction] {tag} | PrecR={r_prec:.6f} CovR={r_cov:.6f} CountR={r_count} | "
+        f"PrecS={s_prec:.6f} CovS={s_cov:.6f} CountS={s_count} | "
+        f"PrecA={a_prec:.6f} CovA={a_cov:.6f} CountA={a_count} | "
+        f"NRR_R={nrr_r:.6f} NRR_S={nrr_s:.6f} NRR_A={nrr_a:.6f} | "
+        f"Clean0={int(clean0.sum())} Noisy0={int(noisy0.sum())}"
+    )
+    logger.info(
+        f"[SubsetAudit] {tag} | "
+        f"CleanActiveCov={clean_cov_a:.6f} CleanActivePrec={clean_prec_a:.6f} "
+        f"CleanPseudoAcc={clean_prec_a:.6f} CleanActiveCount={clean_count_a} | "
+        f"NoisyActiveCov={noisy_cov_a:.6f} NoisyActivePrec={noisy_prec_a:.6f} "
+        f"NoisyPseudoAcc={noisy_prec_a:.6f} NoisyActiveCount={noisy_count_a}"
+    )
+
+
+def _ensure_persistent_promotion_state(dataset):
+    labels_np = np.asarray(dataset.clean_labels, dtype=np.int64)
+    n_samples = len(labels_np)
+    if (
+        not hasattr(dataset, 'persistent_promoted_mask')
+        or len(dataset.persistent_promoted_mask) != n_samples
+    ):
+        dataset.persistent_promoted_mask = np.zeros(n_samples, dtype=bool)
+        dataset.persistent_promoted_label = np.full(n_samples, -1, dtype=np.int64)
+    return dataset.persistent_promoted_mask, dataset.persistent_promoted_label
+
+
+def _persistent_promotion_indices(args, logger, dataset, epoch):
+    mode = getattr(args, 'persistent_promotion_mode', 'none')
+    if mode == 'none':
+        return [], np.full(len(dataset), -1, dtype=np.int64)
+
+    promoted_mask, promoted_label = _ensure_persistent_promotion_state(dataset)
+    promoted_indices = np.where(promoted_mask)[0].astype(np.int64).tolist()
+    logger.info(
+        f"[PersistentState] epoch={epoch+1} mode={mode} stage=active "
+        f"PromoteCov={promoted_mask.mean():.6f} PromoteActiveCount={len(promoted_indices)}"
+    )
+    return promoted_indices, promoted_label
+
+
+def _apply_persistent_promotion(args, logger, dataset, epoch, evidence_scores, active_mask, estimated_noise_mask=None):
+    mode = getattr(args, 'persistent_promotion_mode', 'none')
+    scope = getattr(args, 'promotion_scope', 'none')
+    if mode == 'none' or scope == 'none':
+        return
+    if mode != 'hard':
+        raise ValueError(f'Unsupported persistent_promotion_mode={mode}')
+
+    promoted_mask, promoted_label = _ensure_persistent_promotion_state(dataset)
+    scores = evidence_scores.detach().float().cpu().numpy() if torch.is_tensor(evidence_scores) else np.asarray(evidence_scores, dtype=np.float64)
+    scores = _normalize_np_rows(scores)
+    active_np = np.asarray(active_mask, dtype=bool)
+    estimated_noise_np = (~active_np) if estimated_noise_mask is None else np.asarray(estimated_noise_mask, dtype=bool)
+    tau = float(getattr(args, 'promotion_threshold', 0.95))
+    native_prior = np.asarray(
+        dataset.original_soft_labels if hasattr(dataset, 'original_soft_labels') else dataset.soft_labels,
+        dtype=np.float64
+    )
+    candidate_mask, pseudo, conf = _persistent_promotion_candidates(
+        native_prior,
+        scores,
+        active_np,
+        estimated_noise_np,
+        scope=scope,
+        label_space=getattr(args, 'promotion_label_space', 'all'),
+        threshold=tau,
+    )
+
+    promote_mask = candidate_mask & (~promoted_mask)
+    promote_count = int(promote_mask.sum())
+    if promote_count:
+        promoted_mask[promote_mask] = True
+        promoted_label[promote_mask] = pseudo[promote_mask]
+
+    labels_np = np.asarray(dataset.clean_labels, dtype=np.int64)
+    wrong_promote = float((pseudo[promote_mask] != labels_np[promote_mask]).mean()) if promote_count else float('nan')
+    cumulative_mask = promoted_mask
+    cumulative_wrong = float((promoted_label[cumulative_mask] != labels_np[cumulative_mask]).mean()) if cumulative_mask.any() else float('nan')
+    active_promoted_count = int((cumulative_mask & active_np).sum())
+    logger.info(
+        f"[PersistentState] epoch={epoch+1} mode={mode} scope={scope} source={getattr(args, 'promotion_source', 'p2')} "
+        f"label_space={getattr(args, 'promotion_label_space', 'all')} tau={tau:.6f} "
+        f"PromoteCov={cumulative_mask.mean():.6f} PromoteCount={promote_count} "
+        f"WrongPromote={wrong_promote:.6f} CumWrongPromote={cumulative_wrong:.6f} "
+        f"PromoteActiveCount={active_promoted_count}"
+    )
+
+
+def _current_writeback_threshold(args, epoch):
+    start_epoch = int(getattr(args, 'source_update_start_epoch', -1))
+    if start_epoch < 0:
+        start_epoch = int(getattr(args, 'model_warmup_epochs', 10)) + 1
+    if (epoch + 1) < start_epoch:
+        return None
+    schedule = getattr(args, 'source_update_schedule', 'fixed')
+    if schedule == 'pals_linear':
+        total = max(1, int(getattr(args, 'epochs', 1)) - start_epoch)
+        progress = min(1.0, max(0.0, ((epoch + 1) - start_epoch) / total))
+        return 0.45 - 0.10 * progress
+    if schedule == 'high_linear':
+        total = max(1, int(getattr(args, 'epochs', 1)) - start_epoch)
+        progress = min(1.0, max(0.0, ((epoch + 1) - start_epoch) / total))
+        return 0.95 - 0.10 * progress
+    if schedule == 'linear':
+        total = max(1, int(getattr(args, 'epochs', 1)) - start_epoch)
+        progress = min(1.0, max(0.0, ((epoch + 1) - start_epoch) / total))
+        start = float(getattr(args, 'source_update_threshold_start', 0.95))
+        end = float(getattr(args, 'source_update_threshold_end', 0.85))
+        return start + (end - start) * progress
+    return float(getattr(args, 'source_update_threshold', 0.65))
+
+
+def _apply_mvp_source_writeback(args, logger, dataset, epoch, model_scores, active_mask, source_view_scores=None):
+    mode = getattr(args, 'source_update_mode', 'none')
+    scope = getattr(args, 'source_update_scope', 'none')
+    if mode == 'none' or scope == 'none':
+        metrics = _source_state_metrics(dataset)
+        auc_drift = _update_source_drift_auc(dataset, metrics['source_drift'])
+        logger.info(
+            f"[MVPSource] epoch={epoch+1} mode=none scope=none WriteCov=0.000000 WrongWrite=nan "
+            f"SrcRecN={metrics['src_rec_n']:.6f} CleanDamage={metrics['clean_damage']:.6f} "
+            f"MassRecN={metrics['mass_rec_n']:.6f} DamageMass={metrics['damage_mass']:.6f} "
+            f"SourceDrift={metrics['source_drift']:.6f} AUCDrift={auc_drift:.6f} "
+            f"HardContam={metrics['hard_contamination']:.6f} SoftContam={metrics['soft_contamination']:.6f}"
+        )
+        return
+    tau = _current_writeback_threshold(args, epoch)
+    if tau is None:
+        metrics = _source_state_metrics(dataset)
+        auc_drift = _update_source_drift_auc(dataset, metrics['source_drift'])
+        logger.info(
+            f"[MVPSource] epoch={epoch+1} mode={mode} scope={scope} warmup_skip=1 WriteCov=0.000000 WrongWrite=nan "
+            f"SrcRecN={metrics['src_rec_n']:.6f} CleanDamage={metrics['clean_damage']:.6f} "
+            f"MassRecN={metrics['mass_rec_n']:.6f} DamageMass={metrics['damage_mass']:.6f} "
+            f"SourceDrift={metrics['source_drift']:.6f} AUCDrift={auc_drift:.6f}"
+        )
+        return
+    if mode == 'fredis_full':
+        interval = max(1, int(getattr(args, 'fredis_full_update_interval', 20)))
+        if epoch % interval != 0:
+            metrics = _source_state_metrics(dataset)
+            auc_drift = _update_source_drift_auc(dataset, metrics['source_drift'])
+            logger.info(
+                f"[MVPSource] epoch={epoch+1} mode={mode} scope={scope} interval_skip=1 interval={interval} "
+                f"WriteCov=0.000000 WrongWrite=nan SrcRecN={metrics['src_rec_n']:.6f} "
+                f"CleanDamage={metrics['clean_damage']:.6f} MassRecN={metrics['mass_rec_n']:.6f} "
+                f"DamageMass={metrics['damage_mass']:.6f} SourceDrift={metrics['source_drift']:.6f} AUCDrift={auc_drift:.6f}"
+            )
+            return
+    if mode == 'irnet_full':
+        start_epoch = int(getattr(args, 'source_update_start_epoch', -1))
+        if start_epoch < 0:
+            start_epoch = int(getattr(args, 'model_warmup_epochs', 10)) + 1
+        duration = int(getattr(args, 'irnet_full_correct_duration', 2000))
+        if duration >= 0 and (epoch + 1) > (start_epoch + duration):
+            metrics = _source_state_metrics(dataset)
+            auc_drift = _update_source_drift_auc(dataset, metrics['source_drift'])
+            logger.info(
+                f"[MVPSource] epoch={epoch+1} mode={mode} scope={scope} duration_skip=1 duration={duration} "
+                f"WriteCov=0.000000 WrongWrite=nan SrcRecN={metrics['src_rec_n']:.6f} "
+                f"CleanDamage={metrics['clean_damage']:.6f} MassRecN={metrics['mass_rec_n']:.6f} "
+                f"DamageMass={metrics['damage_mass']:.6f} SourceDrift={metrics['source_drift']:.6f} AUCDrift={auc_drift:.6f}"
+            )
+            return
+    if not hasattr(dataset, 'mutable_source_prior'):
+        dataset.mutable_source_prior = np.asarray(dataset.original_soft_labels if hasattr(dataset, 'original_soft_labels') else dataset.soft_labels, dtype=np.float64).copy()
+    reset_interval = int(getattr(args, 'source_reset_interval', 0))
+    if reset_interval > 0 and ((epoch + 1) == 1 or ((epoch + 1) - 1) % reset_interval == 0):
+        dataset.mutable_source_prior = np.asarray(
+            dataset.original_soft_labels if hasattr(dataset, 'original_soft_labels') else dataset.soft_labels,
+            dtype=np.float64
+        ).copy()
+        logger.info(
+            f"[MVPSourceReset] epoch={epoch+1} interval={reset_interval} "
+            f"restored mutable source from native prior before source_update_mode={mode}"
+        )
+    prior = _normalize_np_rows(dataset.mutable_source_prior)
+    scores = model_scores.detach().float().cpu().numpy()
+    scores = _normalize_np_rows(scores)
+    pseudo = scores.argmax(axis=1).astype(np.int64)
+    conf = scores.max(axis=1)
+    active_np = np.asarray(active_mask, dtype=bool)
+    if scope == 'all':
+        update_mask = np.ones_like(conf, dtype=bool)
+    elif scope == 'all_highconf':
+        update_mask = conf >= tau
+    elif scope == 'unreliable_highconf':
+        update_mask = (~active_np) & (conf >= tau)
+    else:
+        raise ValueError(f'Unsupported source_update_scope={scope}')
+    labels_np = np.asarray(dataset.clean_labels, dtype=np.int64)
+    insert_margin = float(getattr(args, 'source_insert_margin', 0.0))
+    extra_metrics = {}
+    forced_prior_after = None
+    irnet_full_payload = None
+    if mode == 'fredis_full':
+        refine_mask, disamb_mask, final_support, full_prior, full_metrics = _fredis_full_candidate_update(
+            args,
+            dataset,
+            prior,
+            scores,
+            update_mask,
+        )
+        forced_prior_after = full_prior
+        sample_update_mask = np.not_equal(prior > 1e-12, final_support).any(axis=1)
+        remove_row_mask = disamb_mask.any(axis=1)
+        insert_row_mask = refine_mask.any(axis=1)
+        extra_metrics.update(full_metrics)
+    elif mode == 'fredis_move':
+        refine_mask, disamb_mask = _fredis_candidate_moves(
+            prior,
+            scores,
+            update_mask,
+            refine_threshold=getattr(args, 'fredis_refine_threshold', 1e-2),
+            disamb_threshold=getattr(args, 'fredis_disamb_threshold', 0.8),
+            refine_min_conf=getattr(args, 'fredis_refine_min_conf', 0.0),
+            disamb_max_conf=getattr(args, 'fredis_disamb_max_conf', 1.0),
+            top_non_candidate_only=bool(getattr(args, 'fredis_top_non_candidate_only', False)),
+        )
+        refine_mask = _cap_fredis_refinement_by_disambiguation(
+            refine_mask,
+            disamb_mask,
+            scores,
+            min_disamb_over_refine=getattr(args, 'fredis_min_disamb_over_refine', 1.0),
+        )
+        sample_update_mask = refine_mask.any(axis=1) | disamb_mask.any(axis=1)
+        remove_row_mask = disamb_mask.any(axis=1)
+        insert_row_mask = refine_mask.any(axis=1)
+        extra_metrics.update(
+            FREDISRefineLabels=int(refine_mask.sum()),
+            FREDISDisambLabels=int(disamb_mask.sum()),
+            FREDISRefineRows=int(insert_row_mask.sum()),
+            FREDISDisambRows=int(remove_row_mask.sum()),
+            FREDISAddMinConf=float(getattr(args, 'fredis_refine_min_conf', 0.0)),
+            FREDISRemMaxConf=float(getattr(args, 'fredis_disamb_max_conf', 1.0)),
+        )
+    elif mode == 'irnet_correct':
+        min_non_candidate_conf = float(getattr(args, 'irnet_min_non_candidate_conf', 0.0))
+        if min_non_candidate_conf <= 0:
+            min_non_candidate_conf = 0.0
+        insert_row_mask, irnet_labels, irnet_tau = _irnet_candidate_correction(
+            prior,
+            scores,
+            update_mask,
+            tau_boundary=getattr(args, 'irnet_tau_boundary', 0.0),
+            min_non_candidate_conf=min_non_candidate_conf,
+        )
+        remove_row_mask = np.zeros_like(conf, dtype=bool)
+        sample_update_mask = insert_row_mask.copy()
+        pseudo = irnet_labels
+        extra_metrics.update(
+            IRNetTauMean=float(np.nanmean(irnet_tau[np.isfinite(irnet_tau)])) if np.isfinite(irnet_tau).any() else float('nan'),
+            IRNetTauBoundary=float(getattr(args, 'irnet_tau_boundary', 0.0)),
+        )
+    elif mode == 'irnet_full':
+        if source_view_scores is None:
+            score_views = [scores, scores, scores]
+        else:
+            score_views = [
+                v.detach().float().cpu().numpy() if torch.is_tensor(v) else np.asarray(v)
+                for v in source_view_scores
+            ]
+        threshold = _irnet_full_current_threshold(args, epoch)
+        insert_row_mask, irnet_labels, irnet_scores, deletion_labels, irnet_tau, valid_non = _irnet_full_candidate_correction(
+            prior,
+            score_views,
+            update_mask,
+            threshold=threshold,
+            correct_deletion=bool(getattr(args, 'irnet_full_correct_deletion', False)),
+        )
+        remove_row_mask = np.zeros_like(conf, dtype=bool)
+        if bool(getattr(args, 'irnet_full_correct_deletion', False)):
+            remove_row_mask = insert_row_mask.copy()
+        sample_update_mask = insert_row_mask.copy()
+        pseudo = irnet_labels
+        irnet_full_payload = (irnet_labels, irnet_scores, deletion_labels)
+        extra_metrics.update(
+            IRNetFullThreshold=float(threshold),
+            IRNetFullViews=int(len(score_views)),
+            IRNetFullValidNonCandidates=int(valid_non),
+            IRNetFullTauMean=float(np.nanmean(irnet_tau[np.isfinite(irnet_tau)])) if np.isfinite(irnet_tau).any() else float('nan'),
+            IRNetFullDeletion=int(bool(getattr(args, 'irnet_full_correct_deletion', False))),
+        )
+    elif mode == 'add_remove':
+        if scope in ('all', 'all_highconf'):
+            remove_row_mask = np.ones_like(conf, dtype=bool)
+            insert_eligible_mask = conf >= tau
+        elif scope == 'unreliable_highconf':
+            remove_row_mask = ~active_np
+            insert_eligible_mask = (~active_np) & (conf >= tau)
+        else:
+            remove_row_mask = update_mask.copy()
+            insert_eligible_mask = update_mask.copy()
+        insert_row_mask = _candidate_membership_insert_mask(
+            prior, scores, insert_eligible_mask, margin=insert_margin
+        )
+        sample_update_mask = remove_row_mask | insert_row_mask
+    elif mode in ('hard_insert', 'pals_augment'):
+        remove_row_mask = np.zeros_like(conf, dtype=bool)
+        insert_row_mask = _candidate_membership_insert_mask(
+            prior, scores, update_mask, margin=insert_margin
+        )
+        sample_update_mask = insert_row_mask.copy()
+    else:
+        remove_row_mask = update_mask.copy()
+        insert_row_mask = update_mask.copy()
+        sample_update_mask = update_mask.copy()
+    write_count = int(sample_update_mask.sum())
+    wrong_write = float((pseudo[sample_update_mask] != labels_np[sample_update_mask]).mean()) if write_count else float('nan')
+    alpha = float(getattr(args, 'source_update_alpha', 0.3))
+    before = prior.copy()
+    idxs = np.where(sample_update_mask)[0]
+    if write_count:
+        if mode in ('hard_insert', 'pals_augment'):
+            prior[idxs, pseudo[idxs]] = 1.0
+        elif mode == 'irnet_correct':
+            prior[idxs, pseudo[idxs]] = 1.0
+        elif mode == 'fredis_full':
+            pass
+        elif mode == 'irnet_full':
+            insert_labels, insert_scores, deletion_labels = irnet_full_payload
+            corrected_support = prior[idxs] > 1e-12
+            row_positions = np.arange(len(idxs))
+            corrected_support[row_positions, insert_labels[idxs]] = True
+            if bool(getattr(args, 'irnet_full_correct_deletion', False)):
+                valid_delete = deletion_labels[idxs] >= 0
+                corrected_support[row_positions[valid_delete], deletion_labels[idxs][valid_delete]] = False
+                corrected_support[row_positions, insert_labels[idxs]] = True
+            update_case = getattr(args, 'irnet_full_correct_update', 'case3')
+            if update_case == 'case1':
+                prior[idxs] = corrected_support.astype(np.float64)
+            elif update_case == 'case2':
+                if bool(getattr(args, 'irnet_full_correct_deletion', False)):
+                    valid_delete = deletion_labels[idxs] >= 0
+                    prior[idxs[row_positions[valid_delete]], deletion_labels[idxs][valid_delete]] = 0.0
+                prior[idxs, insert_labels[idxs]] = 1.0 / prior.shape[1]
+                prior[idxs] = np.where(corrected_support, prior[idxs], 0.0)
+            elif update_case == 'case3':
+                if bool(getattr(args, 'irnet_full_correct_deletion', False)):
+                    valid_delete = deletion_labels[idxs] >= 0
+                    prior[idxs[row_positions[valid_delete]], deletion_labels[idxs][valid_delete]] = 0.0
+                prior[idxs, insert_labels[idxs]] = insert_scores[idxs]
+                prior[idxs] = np.where(corrected_support, prior[idxs], 0.0)
+            elif update_case == 'none':
+                prior[idxs] = corrected_support.astype(np.float64)
+            else:
+                raise ValueError(f'Unsupported irnet_full_correct_update={update_case}')
+            wrong_rows = insert_labels[idxs] != labels_np[idxs]
+            if bool(getattr(args, 'irnet_full_correct_deletion', False)):
+                valid_delete = deletion_labels[idxs] >= 0
+                wrong_rows = wrong_rows | (valid_delete & (deletion_labels[idxs] == labels_np[idxs]))
+            wrong_write = float(wrong_rows.mean()) if len(idxs) else float('nan')
+        elif mode == 'fredis_move':
+            wrong_rows = np.zeros_like(conf, dtype=bool)
+            disamb_rows, disamb_labels = np.where(disamb_mask)
+            refine_rows, refine_labels = np.where(refine_mask)
+            if len(disamb_rows):
+                wrong_rows[disamb_rows] |= (disamb_labels == labels_np[disamb_rows])
+                prior[disamb_rows, disamb_labels] = 0.0
+            if len(refine_rows):
+                wrong_rows[refine_rows] |= (refine_labels != labels_np[refine_rows])
+                prior[refine_rows, refine_labels] = 1.0
+            wrong_write = float(wrong_rows[sample_update_mask].mean()) if write_count else float('nan')
+        elif mode == 'hard_remove':
+            remove_tau = float(getattr(args, 'source_remove_threshold', 0.05))
+            prior_support = prior[idxs] > 0
+            remove_mask = prior_support & (scores[idxs] < remove_tau)
+            for row_pos in range(len(idxs)):
+                if remove_mask[row_pos].all() or np.all(~(prior_support[row_pos] & ~remove_mask[row_pos])):
+                    supported = np.where(prior_support[row_pos])[0]
+                    if supported.size:
+                        keep_label = supported[np.argmax(scores[idxs[row_pos], supported])]
+                        remove_mask[row_pos, keep_label] = False
+            true_removed = remove_mask[np.arange(len(idxs)), labels_np[idxs]]
+            wrong_write = float(true_removed.mean()) if len(idxs) else float('nan')
+            prior[idxs] = np.where(remove_mask, 0.0, prior[idxs])
+        elif mode == 'add_remove':
+            remove_tau = float(getattr(args, 'source_remove_threshold', 0.05))
+            remove_idxs = np.where(remove_row_mask)[0]
+            insert_idxs = np.where(insert_row_mask)[0]
+            wrong_rows = np.zeros_like(conf, dtype=bool)
+            prior_support = prior[remove_idxs] > 0
+            remove_mask = prior_support & (scores[remove_idxs] < remove_tau)
+            for row_pos in range(len(remove_idxs)):
+                if remove_mask[row_pos].all() or np.all(~(prior_support[row_pos] & ~remove_mask[row_pos])):
+                    supported = np.where(prior_support[row_pos])[0]
+                    if supported.size:
+                        keep_label = supported[np.argmax(scores[remove_idxs[row_pos], supported])]
+                        remove_mask[row_pos, keep_label] = False
+            true_removed = remove_mask[np.arange(len(remove_idxs)), labels_np[remove_idxs]] if len(remove_idxs) else np.asarray([], dtype=bool)
+            if len(remove_idxs):
+                wrong_rows[remove_idxs] |= true_removed
+                prior[remove_idxs] = np.where(remove_mask, 0.0, prior[remove_idxs])
+            if len(insert_idxs):
+                wrong_rows[insert_idxs] |= (pseudo[insert_idxs] != labels_np[insert_idxs])
+                prior[insert_idxs, pseudo[insert_idxs]] = 1.0
+            wrong_write = float(wrong_rows[sample_update_mask].mean()) if write_count else float('nan')
+        elif mode == 'mix':
+            one_hot = np.zeros((len(idxs), prior.shape[1]), dtype=np.float64)
+            one_hot[np.arange(len(idxs)), pseudo[idxs]] = 1.0
+            prior[idxs] = (1.0 - alpha) * prior[idxs] + alpha * one_hot
+        elif mode == 'soft_evidence':
+            prior[idxs] = (1.0 - alpha) * prior[idxs] + alpha * scores[idxs]
+        elif mode == 'pico_soft_target':
+            prior[idxs] = _pico_soft_target_update(
+                prior[idxs],
+                scores[idxs],
+                alpha=alpha,
+                candidate_constrained=bool(getattr(args, 'pico_candidate_constrained', False)),
+            )
+            wrong_write = float((prior[idxs].argmax(axis=1) != labels_np[idxs]).mean()) if len(idxs) else float('nan')
+        elif mode == 'replace':
+            prior[idxs, :] = 0.0
+            prior[idxs, pseudo[idxs]] = 1.0
+        elif mode == 'topk_reconstruct':
+            k_recon = max(1, min(int(getattr(args, 'source_reconstruct_k', 5)), prior.shape[1]))
+            topk = np.argpartition(-scores[idxs], kth=k_recon - 1, axis=1)[:, :k_recon]
+            recon = np.zeros_like(prior[idxs])
+            recon[np.arange(len(idxs))[:, None], topk] = scores[idxs][np.arange(len(idxs))[:, None], topk]
+            zero_rows = recon.sum(axis=1) <= 0
+            if zero_rows.any():
+                recon[zero_rows, pseudo[idxs][zero_rows]] = 1.0
+            wrong_write = float((recon[np.arange(len(idxs)), labels_np[idxs]] <= 0).mean()) if len(idxs) else float('nan')
+            prior[idxs] = recon
+        else:
+            raise ValueError(f'Unsupported source_update_mode={mode}')
+    if forced_prior_after is not None:
+        if write_count:
+            wrong_rows = np.zeros_like(conf, dtype=bool)
+            disamb_rows, disamb_labels = np.where(disamb_mask)
+            refine_rows, refine_labels = np.where(refine_mask)
+            if len(disamb_rows):
+                wrong_rows[disamb_rows] |= (disamb_labels == labels_np[disamb_rows])
+            if len(refine_rows):
+                wrong_rows[refine_rows] |= (refine_labels != labels_np[refine_rows])
+            wrong_write = float(wrong_rows[sample_update_mask].mean()) if write_count else float('nan')
+        prior = forced_prior_after
+    dataset.mutable_source_prior = _normalize_np_rows(prior)
+    metrics = _source_state_metrics(dataset)
+    auc_drift = _update_source_drift_auc(dataset, metrics['source_drift'])
+    step_delta = float(np.abs(dataset.mutable_source_prior - before).sum(axis=1).mean())
+    logger.info(
+        f"[MVPSource] epoch={epoch+1} mode={mode} scope={scope} tau={tau:.6f} alpha={alpha:.4f} "
+        f"WriteCov={write_count/len(labels_np):.6f} WriteCount={write_count} WrongWrite={wrong_write:.6f} "
+        f"SrcRecN={metrics['src_rec_n']:.6f} CleanDamage={metrics['clean_damage']:.6f} "
+        f"MassRecN={metrics['mass_rec_n']:.6f} DamageMass={metrics['damage_mass']:.6f} "
+        f"SourceDrift={metrics['source_drift']:.6f} AUCDrift={auc_drift:.6f} StepL1={step_delta:.6f} "
+        f"HardContam={metrics['hard_contamination']:.6f} SoftContam={metrics['soft_contamination']:.6f} "
+        + " ".join(f"{k}={v}" for k, v in extra_metrics.items())
+    )
+
 def run_single_experiment(args):
     start_time = time.time()
     set_seed(args.seed)
@@ -1911,8 +2688,7 @@ def run_single_experiment(args):
         args.exp_name = args.exp_name + _exp_suffix
 
     log_dir = os.path.join(args.out, args.exp_name, f"seed_{args.seed}")
-    resume_checkpoint_path = _resolve_resume_checkpoint(args, log_dir)
-    logger = setup_logger(log_dir, to_console=True, append=bool(resume_checkpoint_path))
+    logger = setup_logger(log_dir, to_console=True)
 
     # 0. 本脚本仅运行第一阶段(不做蒸馏更新/标签覆写/系统重置)
     schedule_epochs = args.epochs
@@ -1921,17 +2697,34 @@ def run_single_experiment(args):
 
     logger.info(f"--- Starting Dynamic Strategy Run with Seed: {args.seed} ---")
     logger.info(f"Settings: {vars(args)}")
+    logger.info(
+        f"[AblationCheck] model_belief_view={args.model_belief_view} | "
+        f"strong_forward={args.model_belief_view != 'weak_only'} | "
+        f"sim_mode_2={args.sim_mode_2} | max_w_model={args.max_w_model:.4f} | "
+        f"uniform_ri={bool(getattr(args, 'ablate_uniform_ri', False))} | "
+        f"no_candidate_prior={bool(getattr(args, 'ablate_no_candidate_prior', False))} | "
+        f"no_salvage_training={bool(getattr(args, 'ablate_no_salvage_training', False))} | "
+        f"no_reliable_mixup={bool(getattr(args, 'ablate_no_reliable_mixup', False))} | "
+        f"no_cr={bool(getattr(args, 'ablate_no_cr', False))}"
+    )
+    logger.info(
+        f"[NSE-MVP] source_update_mode={args.source_update_mode} | evidence={args.source_update_evidence} | scope={args.source_update_scope} | "
+        f"threshold={args.source_update_threshold:.4f} | schedule={args.source_update_schedule} | alpha={args.source_update_alpha:.4f}"
+    )
+    logger.info(
+        f"[PersistentState] persistent_promotion_mode={args.persistent_promotion_mode} | "
+        f"promotion_source={args.promotion_source} | scope={args.promotion_scope} | "
+        f"threshold={args.promotion_threshold:.4f}"
+    )
     logger.info(f"📅 Schedule: Stage-1 only | Configured {schedule_epochs} eps | Running {total_epochs} eps")
-    if resume_checkpoint_path:
-        logger.info(f"🔁 Resume requested from checkpoint: {resume_checkpoint_path}")
 
     # 1. 实验类型判断 (WandB Grouping)
     exp_type = "Baseline_Full"
-    if args.ablate_no_cr and args.no_reliable_mixup:
+    if args.ablate_no_cr and args.ablate_no_reliable_mixup:
         exp_type = "No_CR_No_Rel_MixUp"
     elif args.ablate_no_cr:
         exp_type = "No_CR_StrongOnly"
-    elif args.no_reliable_mixup:
+    elif args.ablate_no_reliable_mixup:
         exp_type = "No_Rel_Mixup"
 
     # 2. WandB 初始化
@@ -1970,37 +2763,30 @@ def run_single_experiment(args):
         test_ds = TestClass(root=args.train_root, train=False, download=True, transform=test_t)
 
     elif args.dataset in ['Treeversity', 'Benthic', 'Plankton']:
+        crowd_root_map = {'Benthic': './Benthic', 'Plankton': './Plankton', 'Treeversity': './Treeversity'}
+
+        # --- 关键修改：在这里添加 dataset=args.dataset ---
         lpi_args = argparse.Namespace(
-            train_root=args.train_root,
+            train_root=crowd_root_map[args.dataset],
             dataset=args.dataset,      # <--- 添加这一行，修复 AttributeError
             num_classes=num_classes,
             lpi=args.lpi,
             seed_dataset=args.seed_dataset
         )
-        if args.split_protocol == 'standard':
-            if args.slice == 1:
-                train_split, test_split = ['fold2', 'fold3', 'fold4', 'fold5'], ['fold1']
-            elif args.slice == 2:
-                train_split, test_split = ['fold1', 'fold3', 'fold4', 'fold5'], ['fold2']
-            elif args.slice == 3:
-                train_split, test_split = ['fold1', 'fold2', 'fold4', 'fold5'], ['fold3']
-            elif args.slice == 4:
-                train_split, test_split = ['fold1', 'fold2', 'fold3', 'fold5'], ['fold4']
-            elif args.slice == 5:
-                train_split, test_split = ['fold1', 'fold2', 'fold3', 'fold4'], ['fold5']
-            else:
-                raise ValueError(f"Invalid standard slice index: {args.slice}")
-        elif args.split_protocol == 'pals_3fold':
-            if args.slice == 1:
-                train_split, test_split = ['fold1', 'fold4', 'fold5'], ['fold3']
-            elif args.slice == 2:
-                train_split, test_split = ['fold1', 'fold2', 'fold5'], ['fold4']
-            elif args.slice == 3:
-                train_split, test_split = ['fold1', 'fold2', 'fold3'], ['fold5']
-            else:
-                raise ValueError(f"Invalid PALS 3-fold slice index: {args.slice}")
+        if args.slice == 1:
+            train_split, test_split = ['fold2', 'fold3', 'fold4', 'fold5'], ['fold1']
+        elif args.slice == 2:
+            train_split, test_split = ['fold1', 'fold3', 'fold4', 'fold5'], ['fold2']
+        elif args.slice == 3:
+            train_split, test_split = ['fold1', 'fold2', 'fold4', 'fold5'], ['fold3']
+        elif args.slice == 4:
+            train_split, test_split = ['fold1', 'fold2', 'fold3', 'fold5'], ['fold4']
+        elif args.slice == 5:
+            train_split, test_split = ['fold1', 'fold2', 'fold3', 'fold4'], ['fold5']
+        elif args.slice == 6:
+            train_split, test_split = ['fold1', 'fold4', 'fold5'], ['fold3']  # 3 Fold 训练对比 (旧默认)
         else:
-            raise ValueError(f"Invalid split protocol: {args.split_protocol}")
+            raise ValueError(f"Invalid slice index: {args.slice}")
 
         base_train_ds = Crowdsource(lpi_args, splits=train_split, transform=None)
         test_ds = Crowdsource(lpi_args, splits=test_split, transform=test_t)
@@ -2008,13 +2794,12 @@ def run_single_experiment(args):
         # 众包数据集使用带有权重的 weights 作为初始分布
         base_train_ds.initial_dist = base_train_ds.weights.copy()
         logger.info(f" 💡 [Crowd Mode] Initialized with weighted candidates (confidence-aware).")
-
-    apply_external_source_if_requested(args, base_train_ds, logger, log_dir)
-
     # 备份原始噪声标签 (Static Anchor),用于可靠集筛选的基准
     if not hasattr(base_train_ds, 'original_soft_labels'):
         base_train_ds.original_soft_labels = base_train_ds.soft_labels.copy()
         logger.info(" 🔒 [Backup] Original noisy soft labels backed up for robust screening.")
+    base_train_ds.mutable_source_prior = base_train_ds.original_soft_labels.copy()
+    _log_source_and_active_quality(logger, 'initial_source', base_train_ds.mutable_source_prior, base_train_ds.clean_labels)
 
     test_loader = DataLoader(test_ds, batch_size=args.batch_size * 2, shuffle=False, num_workers=args.num_workers, pin_memory=True)
 
@@ -2052,8 +2837,6 @@ def run_single_experiment(args):
         scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
         logger.info("Using CosineAnnealingLR")
     best_test_acc = 0.0
-    test_acc = 0.0
-    start_epoch = 0
 
     # 初始化特征空间原型 (Prototypes)
     proto_manager = PrototypeManager(num_classes, feature_dim, ema_alpha=0.9, device=device)
@@ -2063,15 +2846,11 @@ def run_single_experiment(args):
     global_labels = torch.full((total_target_num,), -1, dtype=torch.long, device=device)
     global_is_reliable = torch.zeros(total_target_num, dtype=torch.bool, device=device)
 
-    feature_dataset = FeatureExtractionDataset(
-        base_train_ds,
-        weak_t,
-        strong_t if args.feature_extract_view == 'weak_strong_fusion' else None,
-    )
-    feature_loader = DataLoader(feature_dataset,
+    feature_loader = DataLoader(FeatureExtractionDataset(base_train_ds, weak_t, strong_t),
                                 batch_size=args.batch_size * 2, shuffle=False,
                                 num_workers=args.num_workers, pin_memory=True,
                                 persistent_workers=False)
+    feature_loader.model_belief_view = args.model_belief_view
 
     initial_weights = [1.0] * total_target_num
     dynamic_sampler = DynamicWeightedRandomSampler(initial_weights, total_target_num)
@@ -2081,42 +2860,24 @@ def run_single_experiment(args):
                                 pin_memory=True, drop_last=True,
                                 persistent_workers=False)
 
-    if resume_checkpoint_path:
-        if not os.path.exists(resume_checkpoint_path):
-            raise FileNotFoundError(f"Resume checkpoint not found: {resume_checkpoint_path}")
-        checkpoint = _safe_torch_load(resume_checkpoint_path, map_location=device)
-        encoder.load_state_dict(checkpoint['encoder'])
-        classifier.load_state_dict(checkpoint['classifier'])
-        optimizer.load_state_dict(checkpoint['optimizer'])
-        scheduler.load_state_dict(checkpoint['scheduler'])
-        _load_prototype_state_dict(proto_manager, checkpoint.get('prototype_manager'), device)
-        _load_temporal_state_dict(state_manager, checkpoint.get('temporal_state_manager'))
-        best_test_acc = float(checkpoint.get('best_test_acc', 0.0))
-        test_acc = float(checkpoint.get('test_acc', 0.0))
-        start_epoch = int(checkpoint.get('next_epoch', checkpoint.get('epoch', 0)))
-        _restore_rng_state(checkpoint.get('rng_state'))
-        logger.info(
-            f"✅ Resumed at next epoch {start_epoch + 1}/{total_epochs} | "
-            f"Best={best_test_acc:.2f}% | Last={test_acc:.2f}%"
-        )
-    elif getattr(args, 'checkpoint_every_epoch', False):
-        logger.info("💾 Checkpointing enabled: saving epoch_XXXX.pt, latest.pt, best.pt, epoch_metrics.csv, and epoch_metrics.jsonl.")
-
     # ==============================================================================
     # 5. 主训练循环(仅第一阶段)
     # ==============================================================================
-    for epoch in range(start_epoch, total_epochs):
+    for epoch in range(total_epochs):
         epoch_start_time = time.time()
         logger.info(f"======== Epoch {epoch+1}/{total_epochs} ========")
+        _log_source_and_active_quality(logger, f'epoch_{epoch+1:04d}_source_before_selection', base_train_ds.mutable_source_prior, base_train_ds.clean_labels)
 
         # 5.1 特征提取与可靠性筛选
-        features, model_preds = get_features(
-            encoder,
-            classifier,
-            feature_loader,
-            device,
-            feature_extract_view=args.feature_extract_view,
-        )
+        source_view_scores = None
+        if getattr(args, 'source_update_mode', 'none') == 'irnet_full':
+            features, model_preds, source_view_scores = get_features(
+                encoder, classifier, feature_loader, device,
+                return_source_views=True,
+                source_num_views=getattr(args, 'irnet_full_num_views', 3),
+            )
+        else:
+            features, model_preds = get_features(encoder, classifier, feature_loader, device)
 
         class MockTrainloader:
             def __init__(self, dataset): self.dataset = dataset
@@ -2124,6 +2885,11 @@ def run_single_experiment(args):
         # 执行高级筛选
         selected_mask, selected_labels, knn_pl, model_pl, knn_scores = \
             reliable_pseudolabel_selection_advanced(logger, args, device, MockTrainloader(base_train_ds), features, epoch, state_manager, model_preds, proto_manager)
+        _log_source_and_active_quality(
+            logger, f'epoch_{epoch+1:04d}_extracted_supervision', base_train_ds.mutable_source_prior, base_train_ds.clean_labels,
+            active_mask=selected_mask.detach().cpu().numpy().astype(bool),
+            active_labels=selected_labels.detach().cpu().numpy()
+        )
 
         # 1. 更新原型 (仅使用可靠集)
         proto_manager.update(features, selected_mask.bool(), selected_labels)
@@ -2182,29 +2948,44 @@ def run_single_experiment(args):
                 logger.info(f" 🔬 [Salvage Check] New Tri-Stable: {salvage_mask.sum().item()} (Acc: {acc_tri:.2f}%) | Old Multi-Track: {num_old}")
 
         # 决定是否在训练中使用打捞样本
-        # 策略:只要能打捞出来,就视为 Active Sample (在 Phase 2 尤为重要)
+        # Audit version: salvage detection is kept, while promotion can be disabled explicitly.
         detected_count = salvage_mask.sum().item() if salvage_mask is not None else 0
-        use_salvage_for_training = (detected_count > 0)
+        disable_salvage = bool(getattr(args, 'ablate_no_salvage_training', False))
+        use_salvage_for_training = (detected_count > 0) and (not disable_salvage)
 
         salvage_indices = []
         if use_salvage_for_training:
             salvage_indices = torch.where(salvage_mask > 0)[0].cpu().tolist()
             logger.info(f" 🚀 [Active] Promoting {len(salvage_indices)} salvaged samples to training pool.")
+        logger.info(
+            f"[AblationCheck] no_salvage_training={disable_salvage} | "
+            f"detected_salvage={detected_count} | promoted_salvage={len(salvage_indices)}"
+        )
 
+        persistent_indices, persistent_labels_np = _persistent_promotion_indices(args, logger, base_train_ds, epoch)
+        persistent_set = set(persistent_indices)
+        salvage_indices = [idx for idx in salvage_indices if idx not in persistent_set]
         salvage_set = set(salvage_indices)
 
         # 排除冲突:Reliable Set 中剔除已经是 Salvage 的 (虽然上面做了互斥,这里双重保险)
-        real_reliable_indices = [idx for idx in reliable_indices.cpu().tolist() if idx not in salvage_set]
+        real_reliable_indices = [idx for idx in reliable_indices.cpu().tolist() if idx not in salvage_set and idx not in persistent_set]
 
         # --- 统一权重计算 ---
         total_target = len(base_train_ds)
-        ordered_indices = salvage_indices + real_reliable_indices
+        ordered_indices = persistent_indices + salvage_indices + real_reliable_indices
         sampling_weights_aligned = []
         global_labels.fill_(-1)
         global_is_reliable.zero_()
 
-        total_active_count = len(salvage_indices) + len(real_reliable_indices)
+        total_active_count = len(persistent_indices) + len(salvage_indices) + len(real_reliable_indices)
         unified_weight = float(max(0.0, total_target / max(total_active_count, 1)))
+
+        # A0. Persistent promotion state (UPLLRS-style proxy). Stored pseudo-labels
+        # take priority over current epoch reliable/salvage labels by design.
+        for idx in persistent_indices:
+            sampling_weights_aligned.append(unified_weight)
+            global_labels[idx] = int(persistent_labels_np[idx])
+            global_is_reliable[idx] = True
 
         # A. 打捞集 (Salvaged)
         for idx in salvage_indices:
@@ -2220,9 +3001,37 @@ def run_single_experiment(args):
 
         non_active_count = total_target - total_active_count
         logger.info(
-            f" >> [Sampler] Active: {total_active_count} | Salvaged: {len(salvage_indices)} | "
-            f"Reliable: {len(real_reliable_indices)} | NonActiveExcluded: {non_active_count} | "
-            f"Unified Weight: {unified_weight:.2f}x"
+            f" >> [Sampler] Active: {total_active_count} | Persistent: {len(persistent_indices)} | "
+            f"Salvaged: {len(salvage_indices)} | Reliable: {len(real_reliable_indices)} | "
+            f"NonActiveExcluded: {non_active_count} | Unified Weight: {unified_weight:.2f}x"
+        )
+
+        reliable_mask_np = np.zeros(total_target, dtype=bool)
+        reliable_mask_np[real_reliable_indices] = True
+        salvage_mask_np = np.zeros(total_target, dtype=bool)
+        if len(salvage_indices) > 0:
+            salvage_mask_np[salvage_indices] = True
+        persistent_mask_np = np.zeros(total_target, dtype=bool)
+        if len(persistent_indices) > 0:
+            persistent_mask_np[persistent_indices] = True
+        active_mask_np = reliable_mask_np | salvage_mask_np | persistent_mask_np
+        reliable_labels_np = selected_labels.detach().cpu().numpy()
+        if salvaged_labels is None:
+            salvage_labels_np = np.full(total_target, -1, dtype=np.int64)
+        elif torch.is_tensor(salvaged_labels):
+            salvage_labels_np = salvaged_labels.detach().cpu().numpy()
+        else:
+            salvage_labels_np = np.asarray(salvaged_labels, dtype=np.int64)
+        active_labels_np = reliable_labels_np.copy()
+        if len(salvage_indices) > 0:
+            active_labels_np[salvage_indices] = salvage_labels_np[salvage_indices]
+        if len(persistent_indices) > 0:
+            active_labels_np[persistent_indices] = persistent_labels_np[persistent_indices]
+        _log_mvp_extraction_metrics(
+            logger, f'epoch_{epoch+1:04d}', base_train_ds,
+            reliable_mask_np, reliable_labels_np,
+            salvage_mask_np, salvage_labels_np,
+            active_mask_np, active_labels_np
         )
 
         avg_sm_weight = 0.0
@@ -2244,42 +3053,26 @@ def run_single_experiment(args):
 
         # 评估与保存
         test_acc = evaluate(encoder, classifier, test_loader, device)
-        is_best = test_acc > best_test_acc
-        if is_best:
-            best_test_acc = test_acc
+        if test_acc > best_test_acc: best_test_acc = test_acc
 
         # 本脚本不使用 EMA teacher / EMA 共识(也不维护 EMA 预测均值)
 
-        epoch_duration = time.time() - epoch_start_time
-        metrics = {
-            'epoch': int(epoch + 1),
-            'test_acc': round(float(test_acc), 6),
-            'best_test_acc': round(float(best_test_acc), 6),
-            'is_best': bool(is_best),
-            'lr': float(optimizer.param_groups[0]['lr']),
-            'epoch_time_sec': round(float(epoch_duration), 4),
-            'avg_sm_weight': round(float(avg_sm_weight), 6),
-            'active_count': int(total_active_count),
-            'salvaged_count': int(len(salvage_indices)),
-            'reliable_count': int(len(real_reliable_indices)),
-            'non_active_count': int(non_active_count),
-            'unified_weight': round(float(unified_weight), 6),
-            'max_w_model': float(getattr(args, 'max_w_model', 1.0)),
-            'model_warmup_epochs': int(getattr(args, 'model_warmup_epochs', 10)),
-            'seed': int(args.seed),
-        }
-        _append_epoch_metrics(log_dir, metrics)
-
-        checkpoint_path = None
-        if getattr(args, 'checkpoint_every_epoch', False):
-            checkpoint_path = _save_epoch_checkpoint(
-                log_dir, epoch + 1, args, encoder, classifier, optimizer, scheduler,
-                proto_manager, state_manager, best_test_acc, test_acc, metrics, is_best=is_best
-            )
-
         wandb.log({'Test Accuracy': test_acc, 'Best Accuracy': best_test_acc, 'LR': optimizer.param_groups[0]['lr']}, step=epoch+1)
-        ckpt_msg = f" | Checkpoint={checkpoint_path}" if checkpoint_path else ""
-        logger.info(f"Epoch {epoch+1} Summary: Acc={test_acc:.2f}% | Best={best_test_acc:.2f}% | Time: {epoch_duration:.2f}s{ckpt_msg}\n")
+        logger.info(f"Epoch {epoch+1} Summary: Acc={test_acc:.2f}% | Best={best_test_acc:.2f}% | Time: {time.time()-epoch_start_time:.2f}s\n")
+        if getattr(args, 'source_update_mode', 'none') in ('fredis_full', 'irnet_full'):
+            source_scores = model_preds
+        else:
+            source_scores = knn_scores if getattr(args, 'source_update_evidence', 'model') == 'p2' else model_preds
+        promotion_scores = knn_scores if getattr(args, 'promotion_source', 'p2') == 'p2' else model_preds
+        nse_estimated_noise_mask_np = (selected_mask.detach().cpu().numpy() <= 0)
+        _apply_persistent_promotion(
+            args, logger, base_train_ds, epoch, promotion_scores, active_mask_np,
+            estimated_noise_mask=nse_estimated_noise_mask_np
+        )
+        _apply_mvp_source_writeback(
+            args, logger, base_train_ds, epoch, source_scores, active_mask_np,
+            source_view_scores=source_view_scores,
+        )
 
     wandb.finish()
     return best_test_acc, test_acc, time.time() - start_time

@@ -1,3 +1,8 @@
+# AUDIT VERSION / 审计版
+# Git/source note: copied from bayes_unified_unified_ablation.py and only patched in this audit copy.
+# Based on: bayes_unified_unified_ablation.py
+# Created: 2026-05-13
+# Purpose: trustworthy ablation script with verifiable [AblationCheck] logs.
 # -*- coding: utf-8 -*-
 """
 bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model
@@ -36,7 +41,7 @@ all crowd runs and only vary `dataset`, `train_root`, `lpi`, and `exp_name`.
 - `--network R50 --epochs 100 --batch_size 32`
 - `--lr 0.05 --wd 0.0005 --momentum 0.9`
 - `--lr_scheduler step --lr_decay_epochs 60 80 --lr_decay_rate 0.2`
-- `--mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999`
+- `--mixup_alpha 1.0 --lsr 0.0`
 - `--k_val 5 --delta 1.0 --history_len 15 --consensus_power 2.0`
 - `--sim_mode_1 topology_daes --sim_mode_2 topology_daes --knn_heads 1`
 - `--max_w_model 0.1`
@@ -54,7 +59,7 @@ python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model
   --network R18 --epochs 500 --batch_size 256 \
   --lr 0.1 --wd 0.001 --momentum 0.9 \
   --lr_scheduler cosine \
-  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
+  --mixup_alpha 1.0 --lsr 0.0 \
   --k_val 15 --delta 0.25 --history_len 15 --consensus_power 2.0 \
   --sim_mode_1 topology_daes --sim_mode_2 topology_daes --knn_heads 1 \
   --max_w_model 0.5 \
@@ -72,7 +77,7 @@ python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model
   --network R18 --epochs 500 --batch_size 256 \
   --lr 0.1 --wd 0.001 --momentum 0.9 \
   --lr_scheduler cosine \
-  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
+  --mixup_alpha 1.0 --lsr 0.0 \
   --k_val 15 --delta 0.25 --history_len 15 --consensus_power 2.0 \
   --sim_mode_1 topology_daes --sim_mode_2 topology_daes --knn_heads 1 \
   --max_w_model 0.5 \
@@ -85,7 +90,7 @@ python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model
   --network R18 --epochs 500 --batch_size 256 \
   --lr 0.1 --wd 0.001 --momentum 0.9 \
   --lr_scheduler cosine \
-  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
+  --mixup_alpha 1.0 --lsr 0.0 \
   --k_val 15 --delta 0.25 --history_len 15 --consensus_power 2.0 \
   --sim_mode_1 topology_daes --sim_mode_2 topology_daes --knn_heads 1 \
   --max_w_model 0.5 \
@@ -102,7 +107,7 @@ python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model
   --network R18 --epochs 500 --batch_size 256 \
   --lr 0.1 --wd 0.001 --momentum 0.9 \
   --lr_scheduler cosine \
-  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
+  --mixup_alpha 1.0 --lsr 0.0 \
   --k_val 15 --delta 0.25 --history_len 15 --consensus_power 2.0 \
   --sim_mode_1 daes --sim_mode_2 daes --knn_heads 1 \
   --max_w_model 0.5 \
@@ -115,7 +120,7 @@ python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model
   --network R18 --epochs 500 --batch_size 256 \
   --lr 0.1 --wd 0.001 --momentum 0.9 \
   --lr_scheduler cosine \
-  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
+  --mixup_alpha 1.0 --lsr 0.0 \
   --k_val 15 --delta 0.25 --history_len 15 --consensus_power 2.0 \
   --sim_mode_1 daes --sim_mode_2 daes --knn_heads 1 \
   --max_w_model 0.5 \
@@ -129,7 +134,7 @@ python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model
   --network R18 --epochs 500 --batch_size 256 \
   --lr 0.1 --wd 0.001 --momentum 0.9 \
   --lr_scheduler cosine \
-  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
+  --mixup_alpha 1.0 --lsr 0.0 \
   --k_val 15 --delta 0.25 --history_len 15 --consensus_power 2.0 \
   --sim_mode_1 daes --sim_mode_2 daes --knn_heads 1 \
   --max_w_model 0.5 \
@@ -142,7 +147,7 @@ python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model
   --network R18 --epochs 500 --batch_size 256 \
   --lr 0.1 --wd 0.001 --momentum 0.9 \
   --lr_scheduler cosine \
-  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
+  --mixup_alpha 1.0 --lsr 0.0 \
   --k_val 15 --delta 0.25 --history_len 15 --consensus_power 2.0 \
   --sim_mode_1 daes --sim_mode_2 daes --knn_heads 1 \
   --max_w_model 0.5 \
@@ -161,7 +166,7 @@ python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model
   --network R18 --epochs 500 --batch_size 256 \
   --lr 0.1 --wd 0.001 --momentum 0.9 \
   --lr_scheduler cosine \
-  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
+  --mixup_alpha 1.0 --lsr 0.0 \
   --k_val 15 --delta 0.25 --history_len 15 --consensus_power 2.0 \
   --sim_mode_1 topology_daes --sim_mode_2 topology_daes --knn_heads 1 \
   --max_w_model 0.5 \
@@ -182,7 +187,7 @@ python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model
   --network R50 --epochs 100 --batch_size 32 \
   --lr 0.05 --wd 0.0005 --momentum 0.9 \
   --lr_scheduler step --lr_decay_epochs 60 80 --lr_decay_rate 0.2 \
-  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
+  --mixup_alpha 1.0 --lsr 0.0 \
   --k_val 5 --delta 1.0 --history_len 15 --consensus_power 2.0 \
   --sim_mode_1 topology_daes --sim_mode_2 topology_daes --knn_heads 1 \
   --max_w_model 0.5 \
@@ -195,7 +200,7 @@ python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model
   --network R50 --epochs 100 --batch_size 32 \
   --lr 0.05 --wd 0.0005 --momentum 0.9 \
   --lr_scheduler step --lr_decay_epochs 60 --lr_decay_rate 0.2 \
-  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
+  --mixup_alpha 1.0 --lsr 0.0 \
   --k_val 5 --delta 1.0 --history_len 15 --consensus_power 2.0 \
   --sim_mode_1 topology_daes --sim_mode_2 daes --knn_heads 1 \
   --max_w_model 0.5 \
@@ -209,7 +214,7 @@ python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model
   --network R50 --epochs 100 --batch_size 32 \
   --lr 0.05 --wd 0.0005 --momentum 0.9 \
   --lr_scheduler step --lr_decay_epochs 60 80 --lr_decay_rate 0.2 \
-  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
+  --mixup_alpha 1.0 --lsr 0.0 \
   --k_val 5 --delta 1.0 --history_len 15 --consensus_power 2.0 \
   --sim_mode_1 topology_daes --sim_mode_2 topology_daes --knn_heads 1 \
   --max_w_model 0.5 \
@@ -225,7 +230,7 @@ python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model
   --network R50 --epochs 100 --batch_size 32 \
   --lr 0.05 --wd 0.0005 --momentum 0.9 \
   --lr_scheduler step --lr_decay_epochs 60 80 --lr_decay_rate 0.2 \
-  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
+  --mixup_alpha 1.0 --lsr 0.0 \
   --k_val 5 --delta 1.0 --history_len 15 --consensus_power 2.0 \
   --sim_mode_1 topology_daes --sim_mode_2 topology_daes --knn_heads 1 \
   --max_w_model 0.5 \
@@ -242,7 +247,7 @@ python "bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开mode
     --batch_size 64 \
     --lr 0.05 \
     --wd 5e-4 \
-    --consistency_weight 1.0 \
+    \
     --seeds 1 2 3 \
     --lsr 0.0 \
     --detailed_log \
@@ -283,9 +288,6 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import datasets, transforms
 import random
 import logging
-import csv
-import json
-import shutil
 from PIL import Image
 try:
     from torch.amp import autocast as _autocast, GradScaler
@@ -325,7 +327,7 @@ def set_seed(seed):
 
 # In Section 0: 环境设置 (Environment Setup)
 
-def setup_logger(log_dir, filename="run.log", is_master=False, to_console=False, append=False):
+def setup_logger(log_dir, filename="run.log", is_master=False, to_console=False):
     """
     Modified to allow disabling console output explicitly.
     """
@@ -346,7 +348,7 @@ def setup_logger(log_dir, filename="run.log", is_master=False, to_console=False,
     log_file = os.path.join(log_dir, filename)
     
     # File Handler (Always active)
-    file_handler = logging.FileHandler(log_file, mode='a' if append else 'w')
+    file_handler = logging.FileHandler(log_file, mode='w')
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
     
@@ -357,137 +359,6 @@ def setup_logger(log_dir, filename="run.log", is_master=False, to_console=False,
         logger.addHandler(console_handler)
         
     return logger
-
-def _resolve_resume_checkpoint(args, log_dir):
-    resume_checkpoint = getattr(args, 'resume_checkpoint', '')
-    if resume_checkpoint:
-        return resume_checkpoint
-    if getattr(args, 'auto_resume', False):
-        latest_path = os.path.join(log_dir, 'latest.pt')
-        if os.path.exists(latest_path):
-            return latest_path
-    return None
-
-def _safe_torch_load(path, map_location):
-    try:
-        return torch.load(path, map_location=map_location, weights_only=False)
-    except TypeError:
-        return torch.load(path, map_location=map_location)
-
-def _rng_state_dict():
-    state = {
-        'python': random.getstate(),
-        'numpy': np.random.get_state(),
-        'torch': torch.get_rng_state(),
-    }
-    if torch.cuda.is_available():
-        state['cuda'] = torch.cuda.get_rng_state_all()
-    return state
-
-def _restore_rng_state(state):
-    if not state:
-        return
-    random.setstate(state['python'])
-    np.random.set_state(state['numpy'])
-    torch.set_rng_state(state['torch'])
-    if torch.cuda.is_available() and 'cuda' in state:
-        torch.cuda.set_rng_state_all(state['cuda'])
-
-def _prototype_state_dict(proto_manager):
-    return {
-        name: value.detach().cpu() if torch.is_tensor(value) else copy.deepcopy(value)
-        for name, value in vars(proto_manager).items()
-        if not name.startswith('__')
-    }
-
-def _load_prototype_state_dict(proto_manager, state, device):
-    if not state:
-        return
-    for name, value in state.items():
-        if torch.is_tensor(value):
-            setattr(proto_manager, name, value.to(device))
-        else:
-            setattr(proto_manager, name, value)
-
-def _temporal_state_dict(state_manager):
-    return {
-        name: value.detach().cpu() if torch.is_tensor(value) else copy.deepcopy(value)
-        for name, value in vars(state_manager).items()
-        if not name.startswith('__')
-    }
-
-def _load_temporal_state_dict(state_manager, state):
-    if not state:
-        return
-    for name, value in state.items():
-        setattr(state_manager, name, value)
-
-def _append_epoch_metrics(log_dir, metrics):
-    os.makedirs(log_dir, exist_ok=True)
-    csv_path = os.path.join(log_dir, 'epoch_metrics.csv')
-    jsonl_path = os.path.join(log_dir, 'epoch_metrics.jsonl')
-    fieldnames = list(metrics.keys())
-    write_header = not os.path.exists(csv_path)
-    with open(csv_path, 'a', newline='', encoding='utf-8') as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
-        if write_header:
-            writer.writeheader()
-        writer.writerow(metrics)
-    with open(jsonl_path, 'a', encoding='utf-8') as handle:
-        handle.write(json.dumps(metrics, ensure_ascii=False) + '\n')
-
-def _save_epoch_checkpoint(log_dir, epoch, args, encoder, classifier, optimizer, scheduler,
-                           proto_manager, state_manager, best_test_acc, test_acc, metrics, is_best=False):
-    os.makedirs(log_dir, exist_ok=True)
-    checkpoint = {
-        'epoch': int(epoch),
-        'next_epoch': int(epoch),
-        'args': vars(args),
-        'encoder': encoder.state_dict(),
-        'classifier': classifier.state_dict(),
-        'optimizer': optimizer.state_dict(),
-        'scheduler': scheduler.state_dict(),
-        'prototype_manager': _prototype_state_dict(proto_manager),
-        'temporal_state_manager': _temporal_state_dict(state_manager),
-        'best_test_acc': float(best_test_acc),
-        'test_acc': float(test_acc),
-        'metrics': metrics,
-        'rng_state': _rng_state_dict(),
-    }
-    epoch_path = os.path.join(log_dir, f'epoch_{epoch:04d}.pt')
-    latest_path = os.path.join(log_dir, 'latest.pt')
-    torch.save(checkpoint, epoch_path)
-    shutil.copyfile(epoch_path, latest_path)
-    if is_best:
-        shutil.copyfile(epoch_path, os.path.join(log_dir, 'best.pt'))
-    return epoch_path
-
-def apply_external_source_if_requested(args, dataset, logger, log_dir):
-    source_path = getattr(args, 'external_source_path', '')
-    if not source_path:
-        return False
-    path = os.path.abspath(source_path)
-    if not os.path.exists(path):
-        raise FileNotFoundError(f"External source prior not found: {path}")
-    if path.endswith('.npz'):
-        archive = np.load(path)
-        key = 'source_prior' if 'source_prior' in archive else archive.files[0]
-        source_prior = archive[key]
-    elif path.endswith('.npy'):
-        source_prior = np.load(path)
-    else:
-        source_prior = np.loadtxt(path, delimiter=',')
-    source_prior = np.asarray(source_prior, dtype=np.float32)
-    if not hasattr(dataset, 'soft_labels'):
-        raise AttributeError('Dataset does not expose soft_labels for external source replacement.')
-    if source_prior.shape != np.asarray(dataset.soft_labels).shape:
-        raise ValueError(f"External source shape {source_prior.shape} does not match soft_labels {np.asarray(dataset.soft_labels).shape}.")
-    dataset.soft_labels = source_prior.copy()
-    dataset.original_soft_labels = source_prior.copy()
-    os.makedirs(log_dir, exist_ok=True)
-    np.save(os.path.join(log_dir, 'external_source_prior.npy'), source_prior)
-    logger.info(f"Loaded external source prior from {path}")
-    return True
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Ultimate Hybrid PALS-SSL Framework with Three-Phase Training')
@@ -503,16 +374,12 @@ def parse_args():
     parser.add_argument('--seeds', type=int, nargs='+', default=[1], help='List of random seeds.')
     parser.add_argument('--num_workers', type=int, default=4, help='num workers')
     parser.add_argument('--cuda_dev', type=int, default=0, help='GPU to select')
-    parser.add_argument('--external_source_path', type=str, default='',
-                        help='Optional .npy/.npz/.csv source prior replacing generated candidate labels.')
     
     # 部分标签 (PLL) 设置
     parser.add_argument('--pr', type=float, default=0.05, help='partial ratio (q)')
     parser.add_argument('--nr', type=float, default=0.5, help='noise ratio (eta)')
     parser.add_argument('--lpi', type=int, default=10, help='Labels Per Image (LPI) for crowdsource NPLL conversion')
     parser.add_argument('--slice', type=int, default=1, choices=[1, 2, 3, 4, 5], help='Fold slice index for cross-validation')
-    parser.add_argument('--split_protocol', type=str, default='standard', choices=['standard', 'pals_3fold'],
-                        help='Crowdsourced-dataset fold protocol.')
     # 核心算法开关
     parser.add_argument('--reliable_selection_mode', type=str, default='pals', choices=['mine', 'pals'], help="Strategy for reliable set selection.")
     
@@ -522,12 +389,6 @@ def parse_args():
     parser.add_argument('--max_run_epochs', type=int, default=0,
                         help='Optional execution cap for smoke or epoch-level validation. '
                              'Keeps --epochs as the schedule horizon; 0 runs all epochs.')
-    parser.add_argument('--resume_checkpoint', type=str, default='',
-                        help='Checkpoint path to resume from.')
-    parser.add_argument('--auto_resume', action='store_true',
-                        help='Resume from latest.pt in the run directory when it exists.')
-    parser.add_argument('--checkpoint_every_epoch', action='store_true',
-                        help='Save epoch_XXXX.pt, latest.pt, best.pt, epoch_metrics.csv, and epoch_metrics.jsonl.')
     parser.add_argument('--batch_size', type=int, default=256, help='Training batch size.')
     parser.add_argument('--lr', type=float, default=0.05, help='Initial learning rate.')
     parser.add_argument('--wd', type=float, default=5e-4, help='Weight decay.')
@@ -541,26 +402,17 @@ def parse_args():
     # 损失函数超参数
     parser.add_argument('--mixup_alpha', type=float, default=1.0, help='Alpha for Mixup.')
     parser.add_argument('--lsr', type=float, default=0.5, help='Label smoothing rate.')
-    parser.add_argument('--consistency_weight', type=float, default=1.0, help='Weight for consistency loss.')
-    parser.add_argument('--feature_extract_view', type=str, default='weak_strong_fusion',
-                        choices=['weak_only', 'weak_strong_fusion'],
-                        help='Image view used for feature extraction.')
 
     # --- 🚀 消融实验开关 (Ablation Study Flags) ---
-    parser.add_argument('--no_reliable_mixup', action='store_true', help='[Ablation] Disable Mixup on reliable set.')
-    parser.add_argument('--ablate_no_cr', action='store_true', help='[Ablation] Disable consistency regularization on the strong view.')
+    parser.add_argument('--ablate_no_reliable_mixup', action='store_true',
+                        help='[AuditAblation] Disable MixUp in the reliable supervised branch; weak/strong images are forwarded without mixing.')
     parser.add_argument('--no_rebalance', action='store_true', help='[Ablation] Disable class rebalancing on pseudo-labels.')
-    parser.add_argument('--no_softmatch', action='store_true', help='[Ablation] Disable SoftMatch weighting (force weight=1.0).')
-    parser.add_argument('--no_unreliable_mixup', action='store_true', help='[Ablation] Disable Mixup on unreliable set (use standard consistency).')
     
     # [新增] 完全禁用不可靠集训练
-    parser.add_argument('--no_unreliable_training', action='store_true', help='[Ablation] COMPLETELY ignore unreliable set (Supervised Only).')
     
     # [新增] 消融:禁用 Middleware Rectification
-    parser.add_argument('--no_rectify', action='store_true', help='[Ablation] Disable Middleware Gating/Rectification.')
     
     # [新增] 消融:EMA 因子
-    parser.add_argument('--ema_alpha', type=float, default=0.999, help='EMA momentum factor (default: 0.999).')
     # ---------------------------------------------
 
     # KNN & 平衡参数
@@ -569,8 +421,6 @@ def parse_args():
     
     parser.add_argument('--history_len', type=int, default=15, help='example selection quantile')
     # --- 🚀 [Added for Ablation Master Control] ---
-    parser.add_argument('--consensus_power', type=float, default=2.0, help='Power for consensus proportion in dynamic weight (default: 2.0)')
-    parser.add_argument('--fix_dynamic_weight', action='store_true', help='[Ablation] Fix dynamic consistency weight to 1.0 (Disable curriculum)')
     # ----------------------------------------------
 # --- 修改部分开始 ---
     parser.add_argument('--sim_mode_1', type=str, default='topology',  # <--- 修改默认值为 topology
@@ -590,37 +440,16 @@ def parse_args():
     parser.add_argument('--topology_rel_eps', type=float, default=1e-12,
                         help='[Topology] Epsilon for numerical stability.')
 
-    parser.add_argument('--warmup_epochs', type=int, default=250, help='Epochs for linear LR warmup.')
 
     # 日志
     parser.add_argument('--detailed_log', action='store_true', help='Enable detailed diagnostic logging.')
     # 1. Teacher Gating 控制 (干预机制)
-    parser.add_argument('--gating_start_ratio', type=float, default=0.2, 
-                        help='[Gating] Ratio of epochs before teacher gating starts (default: 0.2, means start at 20%% epoch).')
-    parser.add_argument('--gating_max_alpha', type=float, default=1.0, 
-                        help='[Gating] Max influence of teacher (0.0 to 1.0). Set <1.0 to always keep some geometry signal.')
 
     # 2. DAES 算法控制 (拓扑构建)
-    parser.add_argument('--daes_clamp', type=float, default=0.25, 
-                        help='[DAES] Max temperature clamp (Anti-oversmoothing lock). Lower is sharper.')
-    parser.add_argument('--daes_entropy_weight', type=float, default=0.2, 
-                        help='[DAES] Sensitivity to local entropy (tau = base + weight * H).')
-    parser.add_argument('--daes_sharpening_power', type=float, default=2.0, 
-                        help='[DAES] Sharpening power for local mean calculation (default=1.0).')
     
     # [新增] DAES 参数化控制
-    parser.add_argument('--daes_spatial_temp', type=float, default=0.5, 
-                        help='[DAES] Temperature for spatial weighting (default: 0.5).')
-    parser.add_argument('--daes_base_tau', type=float, default=0.1, 
-                        help='[DAES] Base temperature for affinity matrix (default: 0.1).')
-    parser.add_argument('--daes_entropy_coeff', type=float, default=0.5, 
-                        help='[DAES] Coefficient for entropy-based temperature adjustment (default: 0.5).')
-    parser.add_argument('--daes_sim_power', type=float, default=2.0, 
-                        help='[DAES] Power to raise similarity to (default: 2.0).')
     
     # [新增] 拓扑参考模式
-    parser.add_argument('--daes_topology_ref_mode', type=str, default='hard', choices=['gated', 'hard'],
-                        help='[DAES] Topology reference mode: "gated" (use teacher confidence gated signal) or "hard" (use raw hard signal).')
 
     # 3. KNN 图构建
     parser.add_argument('--knn_heads', type=int, default=4, 
@@ -633,19 +462,11 @@ def parse_args():
 
 
     # [新增] 消融:禁用一致性正则化
-    parser.add_argument('--enable_knn1_model_fuse', action='store_true',
-                        help='[EXP9] Enable model-geometry fusion with KNN1 scores before candidate projection.')
     
-    parser.add_argument('--fusion_mode', type=str, default='weighted_sum', 
-                        choices=['geometric', 'weighted_sum'],
-                        help='Fusion mode for model prediction and KNN scores (default: weighted_sum)')
 
     # ===========================================================================
     # [消融保留] kl_self_mode（结构保留，本脚本主要使用自适应融合流程）
     # ===========================================================================
-    parser.add_argument('--kl_self_mode', type=str, default='with_self',
-                        choices=['with_self', 'no_self'],
-                        help='[Ablation/KL] Self-node inclusion in KL reliability score.')
 
     # ===========================================================================
     # [新增 / New] 自适应可靠性融合参数
@@ -655,19 +476,8 @@ def parse_args():
     # 修改内容: 新增三个参数控制自适应CE可靠性融合行为
     # Modified: Added three params to control adaptive CE-based reliability fusion.
     # ===========================================================================
-    parser.add_argument('--adap_rel_gamma', type=float, default=2.0,
-                        help='[AdapFuse] Decay factor γ for reliability score r_i=exp(-γ*(CE/logC)²). '
-                             'Higher γ makes the gate more aggressive.')
     parser.add_argument('--adap_rel_eps', type=float, default=1e-12,
                         help='[AdapFuse] Numerical stability ε for CE computation.')
-    parser.add_argument('--adap_ce_direction', type=str, default='knn_over_model',
-                        choices=['knn_over_model', 'model_over_knn'],
-                        help='[AdapFuse] CE direction for reliability scoring.\n'
-                             '  knn_over_model (default): ce=-∑ p_knn2*log(p_model). '
-                             'Low r_i when model is random (early epochs) → prior dominates → '
-                             'candidate-set true-label info guides KNN (natural curriculum).\n'
-                             '  model_over_knn: ce=-∑ p_model*log(p_knn2). '
-                             'Early: measures KNN entropy, rewards already-sharp KNN distributions.')
 
     # ===========================================================================
     # [新增 / New] 渐进融合(Progressive Fusion)预热参数
@@ -676,6 +486,13 @@ def parse_args():
     # 修改内容: 新增 model_warmup_epochs 参数，控制模型预测权重的预热轮数
     # Modified: Added model_warmup_epochs to control w_model warmup schedule.
     # ===========================================================================
+    parser.add_argument('--ablate_uniform_ri', action='store_true',
+                        help='[UnifiedAblation] Replace adaptive r_i with constant 0.5.')
+    parser.add_argument('--ablate_no_candidate_prior', action='store_true',
+                        help='[UnifiedAblation] Remove candidate-prior mask from model evidence before second propagation.')
+    parser.add_argument('--ablate_no_salvage_training', action='store_true',
+                        help='[AuditAblation] Detect salvage samples but do not promote them into the active supervised training set.')
+
     parser.add_argument('--model_warmup_epochs', type=int, default=10,
                         help='[ProgFuse] Number of warmup epochs for model prediction weight. '
                              'w_model = min(1.0, epoch / model_warmup_epochs). '
@@ -684,16 +501,17 @@ def parse_args():
     # [恢复] max_w_model 参数 / Restored max_w_model parameter
     parser.add_argument('--max_w_model', type=float, default=1.0,
                         help='Maximum value for w_model (default: 1.0). Set 0.5 to cap model influence.')
+    parser.add_argument('--model_belief_view', type=str, default='weak_strong_avg',
+                        choices=['weak_strong_avg', 'weak_only'],
+                        help='Model belief used in reliable/salvage selection. '
+                             'weak_strong_avg uses (weak prediction + strong prediction)/2; '
+                             'weak_only uses weak-view prediction only while KNN features remain weak-view features.')
 
     # ===========================================================================
     # [新增 / New] 自适应连续传播深度控制参数
     # [MODIFIED - gitdiffer]
     # <<<<<<< BASE: 
     # =======
-    parser.add_argument("--adaptive_prop_depth", action="store_true",
-                        help="[AdapDepth] Automatically truncate propagation (skip Stage 3) if over-sharpening is detected (high consensus but low reliable volume).")
-    parser.add_argument("--expected_rel_ratio", type=float, default=0.5,
-                        help="[AdapDepth] Expected minimum ratio of reliable samples (default: 0.5). Used with --adaptive_prop_depth.")
     # >>>>>>> NEW: 根据可靠集数量和共识率动态截断传播深度。
     # ===========================================================================
 
@@ -1330,7 +1148,7 @@ def get_topology_daes_affinity(raw_D, neighbors_indices, current_soft_labels, ar
         # Modified: no_self mode aggregates only pure neighbors for KL reliability scoring.
         #           DAES neighborhood entropy computation is unaffected.
         # ===========================================================================
-        kl_self_mode = getattr(args, 'kl_self_mode', 'with_self')
+        kl_self_mode = 'with_self'
         if kl_self_mode == 'no_self' and K_plus_1 > 1:
             # 排除自身节点，仅用纯邻居计算 KL 可靠性
             # Exclude self-node; compute KL reliability from pure neighbors only
@@ -1354,10 +1172,10 @@ def get_topology_daes_affinity(raw_D, neighbors_indices, current_soft_labels, ar
 
     # 第二阶段：DAES（始终使用完整矩阵，不受 kl_self_mode 影响）
     # Stage 2: DAES (always uses full matrix, unaffected by kl_self_mode)
-    att_temp = getattr(args, 'daes_spatial_temp', 0.5)
-    base_tau = getattr(args, 'daes_base_tau', 0.1)
-    entropy_coeff = getattr(args, 'daes_entropy_coeff', 0.5)
-    sim_power = getattr(args, 'daes_sim_power', 2.0)
+    att_temp = 0.5
+    base_tau = 0.1
+    entropy_coeff = 0.5
+    sim_power = 2.0
     
     # [修改点] 移除切片，直接使用完整矩阵评估邻域熵
     spatial_weights = F.softmax(raw_D / att_temp, dim=1).unsqueeze(-1)
@@ -1427,6 +1245,18 @@ def reliable_pseudolabel_selection_advanced(logger, args, device, trainloader, f
         rel_mask = torch.zeros(N, device=device)
         counts = torch.bincount(max_idx[total_cand_mask], minlength=args.num_classes).double()
         limit = torch.quantile(counts, args.delta) if counts.numel() > 0 else 0
+
+        if bool(getattr(args, 'ablate_global_topk_quota', False)):
+            classwise_budget = int(torch.clamp(counts, max=limit).sum().item()) if counts.numel() > 0 else 0
+            classwise_budget = min(classwise_budget, int(total_cand_mask.sum().item()))
+            if classwise_budget > 0:
+                candidate_idx = total_cand_mask.nonzero().squeeze(1)
+                candidate_scores = discrepancy[candidate_idx, max_idx[candidate_idx]]
+                _, top_idx = torch.topk(candidate_scores, k=classwise_budget, largest=False)
+                rel_mask[candidate_idx[top_idx]] = 1.0
+            n_selected = rel_mask.sum().item()
+            acc = (max_idx[rel_mask.bool()] == clean_labels[rel_mask.bool()]).float().mean().item() if n_selected > 0 else 0.0
+            return rel_mask, max_idx, acc, n_selected
 
         for i in range(args.num_classes):
             idx_c_mask = total_cand_mask & (max_idx == i)
@@ -1507,6 +1337,7 @@ def reliable_pseudolabel_selection_advanced(logger, args, device, trainloader, f
     model_warmup_epochs = float(getattr(args, 'model_warmup_epochs', 10))
     max_w_model_val = float(getattr(args, 'max_w_model', 1.0))
     w_model = max_w_model_val * min(1.0, epoch / max(model_warmup_epochs, 1.0))
+    omega_for_ri_conf = crowd_prior if crowd_prior is not None else static_cand_mask.float()
 
     if model_preds is not None:
         p_model_raw = model_preds.float()
@@ -1519,7 +1350,12 @@ def reliable_pseudolabel_selection_advanced(logger, args, device, trainloader, f
         # --- 🚀 [NEW r_i formula] ---
         # conf_knn = max(P_knn), conf_model = max(P_model_fusion)
         conf_knn = p_knn1.max(dim=1)[0]
-        conf_model = p_model_raw.max(dim=1)[0]
+        ri_model_conf_mode = getattr(args, 'ri_model_conf_mode', 'max')
+        conf_model = compute_model_confidence_for_ri(
+            p_model_raw,
+            omega_for_ri_conf,
+            mode=ri_model_conf_mode,
+        )
 
         # r_i = conf_knn / (conf_knn + conf_model + eps)
         r_i = (conf_knn / (conf_knn + conf_model + adap_eps)).unsqueeze(1)
@@ -1531,18 +1367,30 @@ def reliable_pseudolabel_selection_advanced(logger, args, device, trainloader, f
         r_i = torch.ones(N, 1, device=p_knn1.device)
 
     with torch.no_grad():
-        logger.info(f"📊 [Stage 2.5] Reliability Scores (Confidence-based Ratio)")
+        if bool(getattr(args, 'ablate_uniform_ri', False)):
+            r_i = torch.full_like(r_i, 0.5)
+            logger.info("   ├─ [Ablation] r_i forced to constant 0.5.")
+        logger.info(f"📊 [Stage 2.5] Reliability Scores (Confidence-based Ratio, model_conf={getattr(args, 'ri_model_conf_mode', 'max')})")
         logger.info(f"   ├─ r_i: mean={r_i.mean().item():.4f}  std={r_i.std().item():.4f}  "
                     f"min={r_i.min().item():.4f}  max={r_i.max().item():.4f}")
+        if model_preds is not None:
+            logger.info(f"   ├─ conf_model: mean={conf_model.mean().item():.4f}  std={conf_model.std().item():.4f}  "
+                        f"min={conf_model.min().item():.4f}  max={conf_model.max().item():.4f}")
+        if getattr(args, 'ri_model_conf_mode', 'max') == 'prior_mass':
+            logger.info("   ├─ [AblationCheck] ri_model_conf_mode=prior_mass | model_conf=prior_support_probability_mass")
 
-    omega = crowd_prior if crowd_prior is not None else static_cand_mask.float()
+    omega = omega_for_ri_conf
     force_topology_only = bool(getattr(args, 'force_old_branch', False))
     if force_topology_only and _dataset_name in ['Treeversity', 'Benthic', 'Plankton']:
         r_i = torch.ones_like(r_i)
         logger.info(f"✨ [Refine Branch] force_old_branch=True -> r_i forced to 1.0 for {_dataset_name}")
 
     # 保留数据先验 (omega) 对模型预测的约束
-    prior_effective  =  (p_model_effective * omega) / ((p_model_effective * omega).sum(dim=1, keepdim=True) + adap_eps)
+    if bool(getattr(args, 'ablate_no_candidate_prior', False)):
+        prior_effective = p_model_effective / (p_model_effective.sum(dim=1, keepdim=True) + adap_eps)
+        logger.info("   ├─ [Ablation] candidate prior omega removed from model evidence.")
+    else:
+        prior_effective  =  (p_model_effective * omega) / ((p_model_effective * omega).sum(dim=1, keepdim=True) + adap_eps)
 
     # fused_blend = r_i * P_knn + (1 - r_i) * prior_effective
     fused_blend = r_i * p_knn1 + (1.0 - r_i) * prior_effective
@@ -1601,39 +1449,28 @@ def reliable_pseudolabel_selection_advanced(logger, args, device, trainloader, f
 
 
 @torch.no_grad()
-def get_features(encoder, classifier, loader, device, feature_extract_view='weak_only'):
+def get_features(encoder, classifier, loader, device):
     encoder.eval(); classifier.eval(); all_features, all_predictions, all_indices = [], [], []
     for images_dual, indices in loader:
-        if isinstance(images_dual, (tuple, list)):
-            # Legacy path: a tuple of (weak_imgs, strong_imgs)
-            weak_imgs = images_dual[0]
-            strong_imgs = images_dual[1] if len(images_dual) > 1 else None
-        else:
-            # Weak-only feature-screening path.
-            weak_imgs = images_dual
-            strong_imgs = None
+        # images_dual is a tuple of (weak_imgs, strong_imgs)
+        weak_imgs, strong_imgs = images_dual
         weak_imgs = weak_imgs.to(device, non_blocking=True)
+        strong_imgs = strong_imgs.to(device, non_blocking=True)
 
         with autocast():
-            # SRSE screening uses weak-view features for KNN topology. The default
-            # path also uses weak-view predictions to avoid a second global
-            # strong-view forward before active-set construction.
+            # 获取两个视图的特征与预测
             feat_w = encoder(weak_imgs)
             pred_w = F.softmax(classifier(feat_w), dim=1)
 
-            if feature_extract_view == 'weak_strong_fusion':
-                if strong_imgs is None:
-                    raise ValueError('feature_extract_view=weak_strong_fusion requires strong-view batches.')
-                strong_imgs = strong_imgs.to(device, non_blocking=True)
-                feat_s = encoder(strong_imgs)
-                pred_s = F.softmax(classifier(feat_s), dim=1)
-                p_model = (pred_w + pred_s) / 2
-            else:
-                p_model = pred_w
+            feat_s = encoder(strong_imgs)
+            pred_s = F.softmax(classifier(feat_s), dim=1)
+
+            # P_model_fusion = (P_model_strong + P_model_weak) / 2
+            p_fused = (pred_w + pred_s) / 2
 
         # 仍然使用弱增强视图的特征用于 KNN 拓扑构建
         all_features.append(F.normalize(feat_w.float()))
-        all_predictions.append(p_model.float())
+        all_predictions.append(p_fused.float())
         all_indices.append(indices.cpu())
 
     all_features = torch.cat(all_features)
@@ -1731,7 +1568,6 @@ def get_weight_matrix(mode, raw_D, neighbors_indices, ref_soft_labels, args):
             gamma=getattr(args, 'topology_rel_gamma', 2.0),
             eps=getattr(args, 'topology_rel_eps', 1e-12),
             kl_self_mode=getattr(args, 'kl_self_mode', 'with_self'),
-            support_ref=getattr(args, 'topology_support_ref', 2.0),
         )
     elif mode == 'topology_daes':
         refined_D = get_topology_daes_affinity(raw_D, neighbors_indices, ref_soft_labels, args)
@@ -1832,6 +1668,11 @@ def train_unified_single_stream(args, encoder, classifier, device,
             num_sup += B_s
 
     avg_loss_s = total_loss_s / num_sup if num_sup > 0 else 0
+    if getattr(args, 'ablate_no_reliable_mixup', False):
+        logger.info(
+            f"  -> [AblationCheck] active_mixup={reliable_mixup_enabled} | "
+            f"reliable_mixup={reliable_mixup_enabled}"
+        )
     if no_cr:
         logger.info(
             f"  -> [AblationCheck] cr=False | active_views=strong_only | "
@@ -1911,8 +1752,7 @@ def run_single_experiment(args):
         args.exp_name = args.exp_name + _exp_suffix
 
     log_dir = os.path.join(args.out, args.exp_name, f"seed_{args.seed}")
-    resume_checkpoint_path = _resolve_resume_checkpoint(args, log_dir)
-    logger = setup_logger(log_dir, to_console=True, append=bool(resume_checkpoint_path))
+    logger = setup_logger(log_dir, to_console=True)
 
     # 0. 本脚本仅运行第一阶段(不做蒸馏更新/标签覆写/系统重置)
     schedule_epochs = args.epochs
@@ -1922,16 +1762,14 @@ def run_single_experiment(args):
     logger.info(f"--- Starting Dynamic Strategy Run with Seed: {args.seed} ---")
     logger.info(f"Settings: {vars(args)}")
     logger.info(f"📅 Schedule: Stage-1 only | Configured {schedule_epochs} eps | Running {total_epochs} eps")
-    if resume_checkpoint_path:
-        logger.info(f"🔁 Resume requested from checkpoint: {resume_checkpoint_path}")
 
     # 1. 实验类型判断 (WandB Grouping)
     exp_type = "Baseline_Full"
-    if args.ablate_no_cr and args.no_reliable_mixup:
+    if args.ablate_no_cr and (args.ablate_no_reliable_mixup or args.no_reliable_mixup):
         exp_type = "No_CR_No_Rel_MixUp"
     elif args.ablate_no_cr:
         exp_type = "No_CR_StrongOnly"
-    elif args.no_reliable_mixup:
+    elif args.ablate_no_reliable_mixup or args.no_reliable_mixup:
         exp_type = "No_Rel_Mixup"
 
     # 2. WandB 初始化
@@ -1970,37 +1808,30 @@ def run_single_experiment(args):
         test_ds = TestClass(root=args.train_root, train=False, download=True, transform=test_t)
 
     elif args.dataset in ['Treeversity', 'Benthic', 'Plankton']:
+        crowd_root_map = {'Benthic': './Benthic', 'Plankton': './Plankton', 'Treeversity': './Treeversity'}
+
+        # --- 关键修改：在这里添加 dataset=args.dataset ---
         lpi_args = argparse.Namespace(
-            train_root=args.train_root,
+            train_root=crowd_root_map[args.dataset],
             dataset=args.dataset,      # <--- 添加这一行，修复 AttributeError
             num_classes=num_classes,
             lpi=args.lpi,
             seed_dataset=args.seed_dataset
         )
-        if args.split_protocol == 'standard':
-            if args.slice == 1:
-                train_split, test_split = ['fold2', 'fold3', 'fold4', 'fold5'], ['fold1']
-            elif args.slice == 2:
-                train_split, test_split = ['fold1', 'fold3', 'fold4', 'fold5'], ['fold2']
-            elif args.slice == 3:
-                train_split, test_split = ['fold1', 'fold2', 'fold4', 'fold5'], ['fold3']
-            elif args.slice == 4:
-                train_split, test_split = ['fold1', 'fold2', 'fold3', 'fold5'], ['fold4']
-            elif args.slice == 5:
-                train_split, test_split = ['fold1', 'fold2', 'fold3', 'fold4'], ['fold5']
-            else:
-                raise ValueError(f"Invalid standard slice index: {args.slice}")
-        elif args.split_protocol == 'pals_3fold':
-            if args.slice == 1:
-                train_split, test_split = ['fold1', 'fold4', 'fold5'], ['fold3']
-            elif args.slice == 2:
-                train_split, test_split = ['fold1', 'fold2', 'fold5'], ['fold4']
-            elif args.slice == 3:
-                train_split, test_split = ['fold1', 'fold2', 'fold3'], ['fold5']
-            else:
-                raise ValueError(f"Invalid PALS 3-fold slice index: {args.slice}")
+        if args.slice == 1:
+            train_split, test_split = ['fold2', 'fold3', 'fold4', 'fold5'], ['fold1']
+        elif args.slice == 2:
+            train_split, test_split = ['fold1', 'fold3', 'fold4', 'fold5'], ['fold2']
+        elif args.slice == 3:
+            train_split, test_split = ['fold1', 'fold2', 'fold4', 'fold5'], ['fold3']
+        elif args.slice == 4:
+            train_split, test_split = ['fold1', 'fold2', 'fold3', 'fold5'], ['fold4']
+        elif args.slice == 5:
+            train_split, test_split = ['fold1', 'fold2', 'fold3', 'fold4'], ['fold5']
+        elif args.slice == 6:
+            train_split, test_split = ['fold1', 'fold4', 'fold5'], ['fold3']  # 3 Fold 训练对比 (旧默认)
         else:
-            raise ValueError(f"Invalid split protocol: {args.split_protocol}")
+            raise ValueError(f"Invalid slice index: {args.slice}")
 
         base_train_ds = Crowdsource(lpi_args, splits=train_split, transform=None)
         test_ds = Crowdsource(lpi_args, splits=test_split, transform=test_t)
@@ -2008,9 +1839,6 @@ def run_single_experiment(args):
         # 众包数据集使用带有权重的 weights 作为初始分布
         base_train_ds.initial_dist = base_train_ds.weights.copy()
         logger.info(f" 💡 [Crowd Mode] Initialized with weighted candidates (confidence-aware).")
-
-    apply_external_source_if_requested(args, base_train_ds, logger, log_dir)
-
     # 备份原始噪声标签 (Static Anchor),用于可靠集筛选的基准
     if not hasattr(base_train_ds, 'original_soft_labels'):
         base_train_ds.original_soft_labels = base_train_ds.soft_labels.copy()
@@ -2052,8 +1880,6 @@ def run_single_experiment(args):
         scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
         logger.info("Using CosineAnnealingLR")
     best_test_acc = 0.0
-    test_acc = 0.0
-    start_epoch = 0
 
     # 初始化特征空间原型 (Prototypes)
     proto_manager = PrototypeManager(num_classes, feature_dim, ema_alpha=0.9, device=device)
@@ -2063,12 +1889,7 @@ def run_single_experiment(args):
     global_labels = torch.full((total_target_num,), -1, dtype=torch.long, device=device)
     global_is_reliable = torch.zeros(total_target_num, dtype=torch.bool, device=device)
 
-    feature_dataset = FeatureExtractionDataset(
-        base_train_ds,
-        weak_t,
-        strong_t if args.feature_extract_view == 'weak_strong_fusion' else None,
-    )
-    feature_loader = DataLoader(feature_dataset,
+    feature_loader = DataLoader(FeatureExtractionDataset(base_train_ds, weak_t, strong_t),
                                 batch_size=args.batch_size * 2, shuffle=False,
                                 num_workers=args.num_workers, pin_memory=True,
                                 persistent_workers=False)
@@ -2081,42 +1902,15 @@ def run_single_experiment(args):
                                 pin_memory=True, drop_last=True,
                                 persistent_workers=False)
 
-    if resume_checkpoint_path:
-        if not os.path.exists(resume_checkpoint_path):
-            raise FileNotFoundError(f"Resume checkpoint not found: {resume_checkpoint_path}")
-        checkpoint = _safe_torch_load(resume_checkpoint_path, map_location=device)
-        encoder.load_state_dict(checkpoint['encoder'])
-        classifier.load_state_dict(checkpoint['classifier'])
-        optimizer.load_state_dict(checkpoint['optimizer'])
-        scheduler.load_state_dict(checkpoint['scheduler'])
-        _load_prototype_state_dict(proto_manager, checkpoint.get('prototype_manager'), device)
-        _load_temporal_state_dict(state_manager, checkpoint.get('temporal_state_manager'))
-        best_test_acc = float(checkpoint.get('best_test_acc', 0.0))
-        test_acc = float(checkpoint.get('test_acc', 0.0))
-        start_epoch = int(checkpoint.get('next_epoch', checkpoint.get('epoch', 0)))
-        _restore_rng_state(checkpoint.get('rng_state'))
-        logger.info(
-            f"✅ Resumed at next epoch {start_epoch + 1}/{total_epochs} | "
-            f"Best={best_test_acc:.2f}% | Last={test_acc:.2f}%"
-        )
-    elif getattr(args, 'checkpoint_every_epoch', False):
-        logger.info("💾 Checkpointing enabled: saving epoch_XXXX.pt, latest.pt, best.pt, epoch_metrics.csv, and epoch_metrics.jsonl.")
-
     # ==============================================================================
     # 5. 主训练循环(仅第一阶段)
     # ==============================================================================
-    for epoch in range(start_epoch, total_epochs):
+    for epoch in range(total_epochs):
         epoch_start_time = time.time()
         logger.info(f"======== Epoch {epoch+1}/{total_epochs} ========")
 
         # 5.1 特征提取与可靠性筛选
-        features, model_preds = get_features(
-            encoder,
-            classifier,
-            feature_loader,
-            device,
-            feature_extract_view=args.feature_extract_view,
-        )
+        features, model_preds = get_features(encoder, classifier, feature_loader, device)
 
         class MockTrainloader:
             def __init__(self, dataset): self.dataset = dataset
@@ -2184,7 +1978,9 @@ def run_single_experiment(args):
         # 决定是否在训练中使用打捞样本
         # 策略:只要能打捞出来,就视为 Active Sample (在 Phase 2 尤为重要)
         detected_count = salvage_mask.sum().item() if salvage_mask is not None else 0
-        use_salvage_for_training = (detected_count > 0)
+        use_salvage_for_training = (detected_count > 0) and (not bool(getattr(args, 'disable_salvage_training', False)))
+        if detected_count > 0 and not use_salvage_for_training:
+            logger.info(f" [Ablation] Salvage training disabled; detected {detected_count} candidates but none promoted.")
 
         salvage_indices = []
         if use_salvage_for_training:
@@ -2244,42 +2040,12 @@ def run_single_experiment(args):
 
         # 评估与保存
         test_acc = evaluate(encoder, classifier, test_loader, device)
-        is_best = test_acc > best_test_acc
-        if is_best:
-            best_test_acc = test_acc
+        if test_acc > best_test_acc: best_test_acc = test_acc
 
         # 本脚本不使用 EMA teacher / EMA 共识(也不维护 EMA 预测均值)
 
-        epoch_duration = time.time() - epoch_start_time
-        metrics = {
-            'epoch': int(epoch + 1),
-            'test_acc': round(float(test_acc), 6),
-            'best_test_acc': round(float(best_test_acc), 6),
-            'is_best': bool(is_best),
-            'lr': float(optimizer.param_groups[0]['lr']),
-            'epoch_time_sec': round(float(epoch_duration), 4),
-            'avg_sm_weight': round(float(avg_sm_weight), 6),
-            'active_count': int(total_active_count),
-            'salvaged_count': int(len(salvage_indices)),
-            'reliable_count': int(len(real_reliable_indices)),
-            'non_active_count': int(non_active_count),
-            'unified_weight': round(float(unified_weight), 6),
-            'max_w_model': float(getattr(args, 'max_w_model', 1.0)),
-            'model_warmup_epochs': int(getattr(args, 'model_warmup_epochs', 10)),
-            'seed': int(args.seed),
-        }
-        _append_epoch_metrics(log_dir, metrics)
-
-        checkpoint_path = None
-        if getattr(args, 'checkpoint_every_epoch', False):
-            checkpoint_path = _save_epoch_checkpoint(
-                log_dir, epoch + 1, args, encoder, classifier, optimizer, scheduler,
-                proto_manager, state_manager, best_test_acc, test_acc, metrics, is_best=is_best
-            )
-
         wandb.log({'Test Accuracy': test_acc, 'Best Accuracy': best_test_acc, 'LR': optimizer.param_groups[0]['lr']}, step=epoch+1)
-        ckpt_msg = f" | Checkpoint={checkpoint_path}" if checkpoint_path else ""
-        logger.info(f"Epoch {epoch+1} Summary: Acc={test_acc:.2f}% | Best={best_test_acc:.2f}% | Time: {epoch_duration:.2f}s{ckpt_msg}\n")
+        logger.info(f"Epoch {epoch+1} Summary: Acc={test_acc:.2f}% | Best={best_test_acc:.2f}% | Time: {time.time()-epoch_start_time:.2f}s\n")
 
     wandb.finish()
     return best_test_acc, test_acc, time.time() - start_time
