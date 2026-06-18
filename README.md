@@ -18,11 +18,6 @@ reproducibility/
   commands/                   Unified paper-experiment launcher.
 ```
 
-The current public snapshot does not require an external ANN/KNN backend. The
-paper-facing training entries use the in-script PyTorch chunked KNN
-implementation, and unused legacy neighbor-selection helpers have been removed
-from the release code.
-
 ## Environment
 
 Recommended Linux setup:

@@ -18,10 +18,6 @@ reproducibility/
   commands/                   统一论文实验 launcher。
 ```
 
-当前公开快照不需要额外的 ANN/KNN 后端库。论文主线训练入口使用脚本内部的
-PyTorch chunked KNN 实现，未被调用的旧邻居选择 helper 函数已经从 release
-代码中移除。
-
 ## 环境配置
 
 推荐 Linux 环境：
