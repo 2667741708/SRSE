@@ -98,9 +98,9 @@ def setup_logger(log_dir, filename="run.log", is_master=False, to_console=False)
     return logger
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Ultimate Hybrid PALS-SSL Framework with Three-Phase Training')
+    parser = argparse.ArgumentParser(description='SRSE component ablation entry with class-balanced reliable selection')
     # 基本设置
-    parser.add_argument('--exp_name', type=str, default='HybridPALS_ThreePhase_Run', help='Experiment name.')
+    parser.add_argument('--exp_name', type=str, default='SRSE_Component_Run', help='Experiment name.')
     
     # 在 parse_args() 函数中修改:
     parser.add_argument('--dataset', type=str, default='CIFAR100', 
@@ -119,9 +119,6 @@ def parse_args():
     parser.add_argument('--nr', type=float, default=0.5, help='noise ratio (eta)')
     parser.add_argument('--lpi', type=int, default=10, help='Labels Per Image (LPI) for crowdsource partial-label conversion')
     parser.add_argument('--slice', type=int, default=1, choices=[1, 2, 3, 4, 5], help='Fold slice index for cross-validation')
-    # 核心算法开关
-    parser.add_argument('--reliable_selection_mode', type=str, default='pals', choices=['mine', 'pals'], help="Strategy for reliable set selection.")
-    
     # 训练超参数
     parser.add_argument('--network', type=str, default='R18', help='Network architecture (R18, R50)')
     parser.add_argument('--epochs', type=int, default=500, help='Total training epochs.')
@@ -244,14 +241,14 @@ def parse_args():
                         dest='ablate_no_salvage_training', action='store_true',
                         help='[AuditAblation] Detect salvage samples but do not promote them into the active supervised training set.')
 
-    parser.add_argument('--model_warmup_epochs', type=int, default=20,
+    parser.add_argument('--model_warmup_epochs', type=int, default=10,
                         help='[ProgFuse] Number of warmup epochs for model prediction weight. '
-                             'w_model = min(1.0, epoch / model_warmup_epochs). '
-                             'At epoch 0, w_model=0 -> p_model_effective = p_knn2 (pure KNN). '
-                             'At epoch >= model_warmup_epochs, w_model=1 -> p_model_effective = p_model.')
+                             'w_model = max_w_model * min(1.0, epoch / model_warmup_epochs). '
+                             'At epoch 0, w_model=0 -> p_model_effective = p_knn1 (pure first-pass KNN). '
+                             'At epoch >= model_warmup_epochs, w_model=max_w_model -> capped model/KNN mixture.')
     # [恢复] max_w_model 参数 / Restored max_w_model parameter
-    parser.add_argument('--max_w_model', type=float, default=1.0,
-                        help='Maximum value for w_model (default: 1.0). Set 0.5 to cap model influence.')
+    parser.add_argument('--max_w_model', type=float, default=0.5,
+                        help='Maximum value for w_model (default: 0.5).')
     parser.add_argument('--model_belief_view', type=str, default='weak_strong_avg',
                         choices=['weak_strong_avg', 'weak_only'],
                         help='Model belief used in reliable/salvage selection. '
@@ -1017,6 +1014,8 @@ def reliable_pseudolabel_selection_advanced(logger, args, device, trainloader, f
             acc = (max_idx[rel_mask.bool()] == clean_labels[rel_mask.bool()]).float().mean().item() if n_selected > 0 else 0.0
             return rel_mask, max_idx, acc, n_selected
 
+        # SRSE reliable-set rule: class-balanced quota over source-supported
+        # predictions, ranked by classwise discrepancy within each predicted class.
         for i in range(args.num_classes):
             idx_c_mask = total_cand_mask & (max_idx == i)
             if idx_c_mask.sum() == 0: continue
@@ -1075,8 +1074,9 @@ def reliable_pseudolabel_selection_advanced(logger, args, device, trainloader, f
     # ==============================================================================
     # [MODIFIED - bayes unified variant] 统一贝叶斯证据融合 / Unified Bayesian Evidential Fusion
     # 所有数据集共用同一条 refine 路径：
-    #   propagation_input_2 ∝ omega ⊙ (r_i * p_knn1 + (1-r_i) * p_model_effective)
-    # 其中 omega 为数据集先验(crowd_prior 或 static_cand_mask)。
+    #   prior_effective = normalize(omega ⊙ p_model_effective)
+    #   propagation_input_2 = normalize(r_i * p_knn1 + (1-r_i) * prior_effective)
+    # omega 只约束模型分支，图传播分支仍可通过邻域证据恢复源先验缺失类别。
     # ==============================================================================
     p_knn1 = curr_soft_out  # Stage 1 结果 [N, C]
     _dataset_name = getattr(args, 'dataset', '')
@@ -1094,7 +1094,7 @@ def reliable_pseudolabel_selection_advanced(logger, args, device, trainloader, f
     # num_classes = args.num_classes
 
     model_warmup_epochs = float(getattr(args, 'model_warmup_epochs', 10))
-    max_w_model_val = float(getattr(args, 'max_w_model', 1.0))
+    max_w_model_val = float(getattr(args, 'max_w_model', 0.5))
     w_model = max_w_model_val * min(1.0, epoch / max(model_warmup_epochs, 1.0))
     omega_for_ri_conf = crowd_prior if crowd_prior is not None else static_cand_mask.float()
 
@@ -1873,4 +1873,3 @@ Modifications / 修改内容:
     - [EN] Added --adaptive_prop_depth and --expected_rel_ratio to dynamically skip Stage 3 if over-sharpening (high consensus, low reliability volume) is detected.
     - [ZH] 新增自适应截断机制。当共识度高（候选集命中率高）但可靠集数量太少时，跳过第三次传播以防类塌陷。
 """
-

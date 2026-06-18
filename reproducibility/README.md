@@ -73,6 +73,11 @@ bash reproducibility/commands/verify_epoch_test_acc_against_reference_logs.sh ma
 The current SRSE code uses `--model_warmup_epochs 10` for the progressive
 model-view fusion schedule. This is the compatibility setting for the revised
 warmup formula; older logs may record `20` under the previous formulation.
+The model-view fusion cap defaults to `--max_w_model 0.5`.
+
+SRSE reliable-set selection is class-balanced by default: predictions must be
+supported by the source prior, then each predicted class receives a `--delta`
+quota and samples are ranked by classwise discrepancy.
 
 The persistent-state proxy suite uses the stable entry names
 `srse_persistent.py`,

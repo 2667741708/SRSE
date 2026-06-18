@@ -6,6 +6,8 @@ Source-Restored Supervision Extraction (SRSE) 是一个面向 noisy partial-labe
 
 这个 release 只发布 SRSE 代码与复现脚本，不包含数据集、生成的特征缓存、原始训练日志、checkpoint、baseline 对比实验脚本或带有机器本地绝对路径的启动脚本。
 
+SRSE 默认使用类别平衡的可靠样本筛选。筛选器先保留预测 argmax 落在源先验支撑集内的样本，再按预测类别分配由 `--delta` 控制的 class-wise quota，并在每个类别内部按 discrepancy 排序选取可靠样本。渐进模型视角融合的上限默认是 `--max_w_model 0.5`；论文复现实验 launcher 也会显式传入该值。
+
 ## 仓库内容
 
 ```text

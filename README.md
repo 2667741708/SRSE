@@ -6,6 +6,8 @@ Source-Restored Supervision Extraction (SRSE) is a reproducibility package for n
 
 This release is intentionally code-focused. It excludes datasets, generated feature caches, raw training logs, checkpoints, baseline-comparison experiment scripts, and machine-local launch wrappers.
 
+SRSE uses class-balanced reliable-sample selection by default. The selector keeps source-supported predictions, allocates a per-predicted-class quota controlled by `--delta`, and ranks samples by classwise discrepancy. The progressive model-view fusion cap defaults to `--max_w_model 0.5`; the launcher passes this value explicitly for the manuscript runs.
+
 ## What Is Included
 
 ```text

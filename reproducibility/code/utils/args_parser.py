@@ -64,9 +64,9 @@ def setup_logger(log_dir, filename="run.log", is_master=False, to_console=False)
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Ultimate Hybrid PALS-SSL Framework with Three-Phase Training')
+    parser = argparse.ArgumentParser(description='SRSE training arguments with class-balanced reliable selection')
     # 基本设置
-    parser.add_argument('--exp_name', type=str, default='HybridPALS_ThreePhase_Run', help='Experiment name.')
+    parser.add_argument('--exp_name', type=str, default='SRSE_Run', help='Experiment name.')
 
     # 在 parse_args() 函数中修改:
     parser.add_argument('--dataset', type=str, default='CIFAR100',
@@ -81,9 +81,6 @@ def parse_args():
     parser.add_argument('--pr', type=float, default=0.05, help='partial ratio (q)')
     parser.add_argument('--nr', type=float, default=0.5, help='noise ratio (eta)')
     parser.add_argument('--lpi', type=int, default=10, help='Labels Per Image (LPI) for crowdsource NPLL conversion')
-    # 核心算法开关
-    parser.add_argument('--reliable_selection_mode', type=str, default='pals', choices=['mine', 'pals'], help="Strategy for reliable set selection.")
-
     # 训练超参数
     parser.add_argument('--network', type=str, default='R18', help='Network architecture (R18, R50)')
     parser.add_argument('--epochs', type=int, default=500, help='Total training epochs.')
@@ -237,8 +234,8 @@ def parse_args():
                              'At epoch 0, w_model=0 -> p_model_effective = p_knn1 (pure first-pass KNN). '
                              'At epoch >= model_warmup_epochs, w_model=max_w_model -> capped model/KNN mixture.')
     # [恢复] max_w_model 参数 / Restored max_w_model parameter
-    parser.add_argument('--max_w_model', type=float, default=1.0,
-                        help='Maximum value for w_model (default: 1.0). Set 0.5 to cap model influence.')
+    parser.add_argument('--max_w_model', type=float, default=0.5,
+                        help='Maximum value for w_model (default: 0.5).')
 
     # ===========================================================================
     # [新增 / New] 自适应连续传播深度控制参数
@@ -254,4 +251,3 @@ def parse_args():
 
     return parser.parse_args()
 # (在 Section 2: 数据处理与模型)
-

@@ -1,266 +1,20 @@
 # -*- coding: utf-8 -*-
-"""
-bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model
-====================================
+"""SRSE main training entry point.
 
-Lineage
--------
-- Base file: `v3_2passKNN_refactored_crowd_entropy.py`
-- Goal: replace the branch-specific refine stage with one unified
-  reliability-aware Bayesian evidential fusion path.
+Reliable samples are selected by the SRSE class-balanced policy. The selector
+first keeps predictions whose argmax label is supported by the source prior,
+then applies a per-predicted-class quota controlled by ``delta`` and ranks
+samples by classwise discrepancy. Legacy reliable-set mode switching is not
+part of the public SRSE interface.
 
-Core rule
----------
-The second-pass propagation input is built as:
+Second-pass fusion applies the source prior only to the model branch:
 
-    internal_belief = r_i * P_knn + (1 - r_i) * P_model
-    propagation_input_2 = normalize(omega * internal_belief)
+    prior_effective = normalize(omega * p_model_effective)
+    propagation_input_2 = normalize(r_i * p_knn1 + (1 - r_i) * prior_effective)
 
-where `r_i` is a per-sample reliability score and `omega` is the dataset prior
-(`crowd_prior` for crowd datasets, `static_cand_mask` for PLL-style datasets).
-
-Current interpretation
-----------------------
-- Crowd datasets (`Benthic`, `Treeversity`, `Plankton`) are currently run with
-  one shared Benthic-aligned setting.
-- For noisy candidate-label datasets such as `CIFAR100/CIFAR100H`, the outer
-  `omega` mask can suppress the true class when it is absent from the noisy
-  candidate set. Interpret those runs with extra care.
-
-Validated crowd setting
------------------------
-Unless a new ablation explicitly changes them, keep the following identical for
-all crowd runs and only vary `dataset`, `train_root`, `lpi`, and `exp_name`.
-
-- `--pr 0.05 --nr 0.5`
-- `--network R50 --epochs 100 --batch_size 32`
-- `--lr 0.05 --wd 0.0005 --momentum 0.9`
-- `--lr_scheduler step --lr_decay_epochs 60 80 --lr_decay_rate 0.2`
-- `--mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999`
-- `--k_val 5 --delta 1.0 --history_len 15 --consensus_power 2.0`
-- `--sim_mode_1 topology_daes --sim_mode_2 topology_daes --knn_heads 1`
-- `--max_w_model 0.1`
-- `--out ./out_ultimate --seeds 1 2 3`
-
-Reference commands
-------------------
-
-C10 reference run:
-
-```bash
-python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model.py \
-  --dataset CIFAR10 --train_root ./data --lpi 10 \
-  --pr 0.5 --nr 0.1 \
-  --network R18 --epochs 500 --batch_size 256 \
-  --lr 0.1 --wd 0.001 --momentum 0.9 \
-  --lr_scheduler cosine \
-  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
-  --k_val 15 --delta 0.25 --history_len 15 --consensus_power 2.0 \
-  --sim_mode_1 topology_daes --sim_mode_2 topology_daes --knn_heads 1 \
-  --max_w_model 0.5 \
-  --out ./out_ultimate \
-  --exp_name bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model/c10_pr05_nr01_maxw05/refactored_e500_seed123 \
-  --seeds 1 2 3 --cuda_dev 0
-```
-
-C100 reference run:
-
-```bash
-python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model.py \
-  --dataset CIFAR100 --train_root ./data --lpi 10 \
-  --pr 0.01 --nr 0.2 \
-  --network R18 --epochs 500 --batch_size 256 \
-  --lr 0.1 --wd 0.001 --momentum 0.9 \
-  --lr_scheduler cosine \
-  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
-  --k_val 15 --delta 0.25 --history_len 15 --consensus_power 2.0 \
-  --sim_mode_1 topology_daes --sim_mode_2 topology_daes --knn_heads 1 \
-  --max_w_model 0.5 \
-  --out ./out_ultimate \
-  --exp_name bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model/c100_pr001_nr02_maxw05/refactored_e500_seed123 \
-  --seeds 1 2 3 --cuda_dev 0
-python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model.py \
-  --dataset CIFAR100 --train_root ./data --lpi 10 \
-  --pr 0.05 --nr 0.3 \
-  --network R18 --epochs 500 --batch_size 256 \
-  --lr 0.1 --wd 0.001 --momentum 0.9 \
-  --lr_scheduler cosine \
-  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
-  --k_val 15 --delta 0.25 --history_len 15 --consensus_power 2.0 \
-  --sim_mode_1 topology_daes --sim_mode_2 topology_daes --knn_heads 1 \
-  --max_w_model 0.5 \
-  --out ./out_ultimate \
-  --exp_name bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model/c100_pr001_nr00_maxw05/refactored_e500_seed123 \
-  --seeds 1 2 3  --cuda_dev 1 
-  
-
-s1 daes s2 daes
-```
-python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model.py \
-  --dataset CIFAR10 --train_root ./data --lpi 10 \
-  --pr 0.5 --nr 0.3 \
-  --network R18 --epochs 500 --batch_size 256 \
-  --lr 0.1 --wd 0.001 --momentum 0.9 \
-  --lr_scheduler cosine \
-  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
-  --k_val 15 --delta 0.25 --history_len 15 --consensus_power 2.0 \
-  --sim_mode_1 daes --sim_mode_2 daes --knn_heads 1 \
-  --max_w_model 0.5 \
-  --out ./out_ultimate \
-  --exp_name bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model/c10_pr05_nr03_maxw05/refactored_e500_seed123_s1_s2daes \
-  --seeds 1 2 3 --cuda_dev 1
-python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model.py \
-  --dataset CIFAR100 --train_root ./data --lpi 10 \
-  --pr 0.05 --nr 0.5 \
-  --network R18 --epochs 500 --batch_size 256 \
-  --lr 0.1 --wd 0.001 --momentum 0.9 \
-  --lr_scheduler cosine \
-  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
-  --k_val 15 --delta 0.25 --history_len 15 --consensus_power 2.0 \
-  --sim_mode_1 daes --sim_mode_2 daes --knn_heads 1 \
-  --max_w_model 0.5 \
-  --out ./out_ultimate \
-  --exp_name bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model/c100_pr005_nr05_maxw05/refactored_e500_seed23_s1daes_s2daes \
-  --seeds 2 3
-
-python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model.py \
-  --dataset CIFAR100 --train_root ./data --lpi 10 \
-  --pr 0.1 --nr 0.0 \
-  --network R18 --epochs 500 --batch_size 256 \
-  --lr 0.1 --wd 0.001 --momentum 0.9 \
-  --lr_scheduler cosine \
-  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
-  --k_val 15 --delta 0.25 --history_len 15 --consensus_power 2.0 \
-  --sim_mode_1 daes --sim_mode_2 daes --knn_heads 1 \
-  --max_w_model 0.5 \
-  --out ./out_ultimate \
-  --exp_name bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model/c100_pr01_nr00_maxw05/refactored_e500_seed123_s1daes_s2daes \
-  --seeds 1 2 3
-python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model.py \
-  --dataset CIFAR100H --train_root ./data --lpi 10 \
-  --pr 0.5 --nr 0.2 \
-  --network R18 --epochs 500 --batch_size 256 \
-  --lr 0.1 --wd 0.001 --momentum 0.9 \
-  --lr_scheduler cosine \
-  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
-  --k_val 15 --delta 0.25 --history_len 15 --consensus_power 2.0 \
-  --sim_mode_1 daes --sim_mode_2 daes --knn_heads 1 \
-  --max_w_model 0.5 \
-  --out ./out_ultimate \
-  --exp_name bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model/c100H_pr05_nr02_maxw05/refactored_e500_seed123_s1daes_s2daes \
-  --seeds 1 2 3 --cuda_dev 1
-
-
-
-C100H reference run:
-
-```bash
-python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model.py \
-  --dataset CIFAR100H --train_root ./data --lpi 10 \
-  --pr 0.5 --nr 0.2 \
-  --network R18 --epochs 500 --batch_size 256 \
-  --lr 0.1 --wd 0.001 --momentum 0.9 \
-  --lr_scheduler cosine \
-  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
-  --k_val 15 --delta 0.25 --history_len 15 --consensus_power 2.0 \
-  --sim_mode_1 topology_daes --sim_mode_2 topology_daes --knn_heads 1 \
-  --max_w_model 0.5 \
-  --out ./out_ultimate \
-  --exp_name bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model/c100H_pr05_nr02_maxw05/refactored_e500_seed123 \
-  --seeds 1 2 3
-```
-
-
-## 2. 真实众包数据集（Benthic / Plankton / Treeversity）
-
-三个数据集走同一套参数，只改 `--dataset`、`--train_root`、`--exp_name`。`--lpi 3` 为默认；改为 `--lpi 10` 时同步修改 `exp_name`。
-
-### 2.1 Benthic
-```bash
-python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model.py \
-  --dataset Benthic --train_root ./Benthic --lpi 10 --slice 2 \
-  --network R50 --epochs 100 --batch_size 32 \
-  --lr 0.05 --wd 0.0005 --momentum 0.9 \
-  --lr_scheduler step --lr_decay_epochs 60 80 --lr_decay_rate 0.2 \
-  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
-  --k_val 5 --delta 1.0 --history_len 15 --consensus_power 2.0 \
-  --sim_mode_1 topology_daes --sim_mode_2 topology_daes --knn_heads 1 \
-  --max_w_model 0.5 \
-  --out ./out_ultimate \
-  --exp_name bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model/benthic_lpi10_maxw05_slice2_lsr00_hl15/refactored_e100_seed123 \
-  --seeds 1 2 3 --cuda_dev 1
-```
-python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model.py \
-  --dataset Benthic --train_root ./Benthic --lpi 3 --slice 2 \
-  --network R50 --epochs 100 --batch_size 32 \
-  --lr 0.05 --wd 0.0005 --momentum 0.9 \
-  --lr_scheduler step --lr_decay_epochs 60 --lr_decay_rate 0.2 \
-  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
-  --k_val 5 --delta 1.0 --history_len 15 --consensus_power 2.0 \
-  --sim_mode_1 topology_daes --sim_mode_2 daes --knn_heads 1 \
-  --max_w_model 0.5 \
-  --out ./out_ultimate \
-  --exp_name bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model/benthic_lpi3_maxw05_slice2_lsr00_hl15/refactored_e100_seed123_s2daes_e60decay \
-  --seeds 1 2 3 --cuda_dev 1
-### 2.2 Plankton
-```bash
-python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model.py \
-  --dataset Plankton --train_root ./Plankton --lpi 3 --slice 2 \
-  --network R50 --epochs 100 --batch_size 32 \
-  --lr 0.05 --wd 0.0005 --momentum 0.9 \
-  --lr_scheduler step --lr_decay_epochs 60 80 --lr_decay_rate 0.2 \
-  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
-  --k_val 5 --delta 1.0 --history_len 15 --consensus_power 2.0 \
-  --sim_mode_1 topology_daes --sim_mode_2 topology_daes --knn_heads 1 \
-  --max_w_model 0.5 \
-  --out ./out_ultimate \
-  --exp_name bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model/plankton_lpi3_maxw05_slice2_hl15_lsr00/refactored_e100_seed123 \
-  --seeds 1 2 3 --cuda_dev 1
-```
-
-### 2.3 Treeversity
-```bash
-python bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model.py \
-  --dataset Treeversity --train_root ./Treeversity --lpi 3 --slice 2 \
-  --network R50 --epochs 100 --batch_size 32 \
-  --lr 0.05 --wd 0.0005 --momentum 0.9 \
-  --lr_scheduler step --lr_decay_epochs 60 80 --lr_decay_rate 0.2 \
-  --mixup_alpha 1.0 --lsr 0.0 --consistency_weight 1.0 --ema_alpha 0.999 \
-  --k_val 5 --delta 1.0 --history_len 15 --consensus_power 2.0 \
-  --sim_mode_1 topology_daes --sim_mode_2 topology_daes --knn_heads 1 \
-  --max_w_model 0.5 \
-  --out ./out_ultimate \
-  --exp_name bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model/treeversity_lpi3_maxw05_slice2_hl15_lsr00/refactored_e100_seed123 \
-  --seeds 1 2 3
-```
-python "bayes_unified_融合可靠_自适应R_i_双视图模型预测_分开model.py" \
-    --train_root ./data \
-    --lpi 10 \
-    --pr 0.05 \
-    --nr 0.2 \
-    --out ./out_ultimate \
-    --batch_size 64 \
-    --lr 0.05 \
-    --wd 5e-4 \
-    --consistency_weight 1.0 \
-    --seeds 1 2 3 \
-    --lsr 0.0 \
-    --detailed_log \
-    --lr_scheduler step \
-    --delta 0.25 \
-    --network R18 \
-    --epochs 250 \
-    --cuda_dev 1 \
-    --sim_mode_1 topology_daes --sim_mode_2 topology_daes --knn_heads 1 \
-    --max_w_model 0.5 \
-    --num_workers 4 \
-    --k_val 15 \
-    --history_len 15
-Logging
--------
-Keep traces and helper logs under:
-
-`out_ultimate/<script_name>/<dataset_and_key_params>/<run_name>/`
+This keeps the graph branch able to restore source-missing labels through
+neighborhood evidence while constraining model evidence by the source prior.
+Experiment commands are maintained under ``reproducibility/commands``.
 """
 import copy
 import torch
@@ -490,9 +244,9 @@ def apply_external_source_if_requested(args, dataset, logger, log_dir):
     return True
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Ultimate Hybrid PALS-SSL Framework with Three-Phase Training')
+    parser = argparse.ArgumentParser(description='SRSE training entry with class-balanced reliable selection')
     # 基本设置
-    parser.add_argument('--exp_name', type=str, default='HybridPALS_ThreePhase_Run', help='Experiment name.')
+    parser.add_argument('--exp_name', type=str, default='SRSE_Run', help='Experiment name.')
     
     # 在 parse_args() 函数中修改:
     parser.add_argument('--dataset', type=str, default='CIFAR100', 
@@ -513,9 +267,6 @@ def parse_args():
     parser.add_argument('--slice', type=int, default=1, choices=[1, 2, 3, 4, 5], help='Fold slice index for cross-validation')
     parser.add_argument('--split_protocol', type=str, default='standard', choices=['standard', 'pals_3fold'],
                         help='Crowdsourced-dataset fold protocol.')
-    # 核心算法开关
-    parser.add_argument('--reliable_selection_mode', type=str, default='pals', choices=['mine', 'pals'], help="Strategy for reliable set selection.")
-    
     # 训练超参数
     parser.add_argument('--network', type=str, default='R18', help='Network architecture (R18, R50)')
     parser.add_argument('--epochs', type=int, default=500, help='Total training epochs.')
@@ -678,12 +429,12 @@ def parse_args():
     # ===========================================================================
     parser.add_argument('--model_warmup_epochs', type=int, default=10,
                         help='[ProgFuse] Number of warmup epochs for model prediction weight. '
-                             'w_model = min(1.0, epoch / model_warmup_epochs). '
-                             'At epoch 0, w_model=0 -> p_model_effective = p_knn2 (pure KNN). '
-                             'At epoch >= model_warmup_epochs, w_model=1 -> p_model_effective = p_model.')
+                             'w_model = max_w_model * min(1.0, epoch / model_warmup_epochs). '
+                             'At epoch 0, w_model=0 -> p_model_effective = p_knn1 (pure first-pass KNN). '
+                             'At epoch >= model_warmup_epochs, w_model=max_w_model -> capped model/KNN mixture.')
     # [恢复] max_w_model 参数 / Restored max_w_model parameter
-    parser.add_argument('--max_w_model', type=float, default=1.0,
-                        help='Maximum value for w_model (default: 1.0). Set 0.5 to cap model influence.')
+    parser.add_argument('--max_w_model', type=float, default=0.5,
+                        help='Maximum value for w_model (default: 0.5).')
 
     # ===========================================================================
     # [新增 / New] 自适应连续传播深度控制参数
@@ -1428,6 +1179,8 @@ def reliable_pseudolabel_selection_advanced(logger, args, device, trainloader, f
         counts = torch.bincount(max_idx[total_cand_mask], minlength=args.num_classes).double()
         limit = torch.quantile(counts, args.delta) if counts.numel() > 0 else 0
 
+        # SRSE reliable-set rule: class-balanced quota over source-supported
+        # predictions, ranked by classwise discrepancy within each predicted class.
         for i in range(args.num_classes):
             idx_c_mask = total_cand_mask & (max_idx == i)
             if idx_c_mask.sum() == 0: continue
@@ -1486,8 +1239,9 @@ def reliable_pseudolabel_selection_advanced(logger, args, device, trainloader, f
     # ==============================================================================
     # [MODIFIED - bayes unified variant] 统一贝叶斯证据融合 / Unified Bayesian Evidential Fusion
     # 所有数据集共用同一条 refine 路径：
-    #   propagation_input_2 ∝ omega ⊙ (r_i * p_knn1 + (1-r_i) * p_model_effective)
-    # 其中 omega 为数据集先验(crowd_prior 或 static_cand_mask)。
+    #   prior_effective = normalize(omega ⊙ p_model_effective)
+    #   propagation_input_2 = normalize(r_i * p_knn1 + (1-r_i) * prior_effective)
+    # omega 只约束模型分支，图传播分支仍可通过邻域证据恢复源先验缺失类别。
     # ==============================================================================
     p_knn1 = curr_soft_out  # Stage 1 结果 [N, C]
     _dataset_name = getattr(args, 'dataset', '')
@@ -1505,7 +1259,7 @@ def reliable_pseudolabel_selection_advanced(logger, args, device, trainloader, f
     # num_classes = args.num_classes
 
     model_warmup_epochs = float(getattr(args, 'model_warmup_epochs', 10))
-    max_w_model_val = float(getattr(args, 'max_w_model', 1.0))
+    max_w_model_val = float(getattr(args, 'max_w_model', 0.5))
     w_model = max_w_model_val * min(1.0, epoch / max(model_warmup_epochs, 1.0))
 
     if model_preds is not None:
@@ -2264,7 +2018,7 @@ def run_single_experiment(args):
             'reliable_count': int(len(real_reliable_indices)),
             'non_active_count': int(non_active_count),
             'unified_weight': round(float(unified_weight), 6),
-            'max_w_model': float(getattr(args, 'max_w_model', 1.0)),
+            'max_w_model': float(getattr(args, 'max_w_model', 0.5)),
             'model_warmup_epochs': int(getattr(args, 'model_warmup_epochs', 10)),
             'seed': int(args.seed),
         }
