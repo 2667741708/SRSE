@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+ROOT="${PROJECT_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
+CODE_ROOT="${CODE_ROOT:-${ROOT}/reproducibility/code}"
 GPU_ID="${1:-0}"
-PY="${PY:-/home/c201/miniconda3/envs/torch_cuda128_whm/bin/python}"
-PROJECT_ROOT="${PROJECT_ROOT:-/home/c201/公共/whm/PALS-SOFT/自适应LSR草稿_v3ref_only_20260409}"
-HUB_ROOT="${HUB_ROOT:-/home/c201/公共/whm/PALS-SOFT/双视图单视图实验结果/experiments/nse_reproducibility}"
-SCRIPT="${SCRIPT:-${HUB_ROOT}/NSE_persistent.py}"
-DATA_ROOT="${DATA_ROOT:-${PROJECT_ROOT}/data}"
-OUT="${OUT:-/home/c201/公共/whm/PALS-SOFT/双视图单视图实验结果/results/nse_persistent_state_modelpred}"
+PY="${PY:-python}"
+SCRIPT="${SCRIPT:-${ROOT}/reproducibility/code/persistent_state/srse_persistent.py}"
+DATA_ROOT="${DATA_ROOT:-${ROOT}/data}"
+OUT="${OUT:-${ROOT}/out_ultimate/srse_persistent_state_modelpred}"
 LAUNCH_LOG_DIR="${OUT}/_launcher_logs"
 mkdir -p "${LAUNCH_LOG_DIR}"
 LAUNCH_NAME="${LAUNCH_NAME:-$(basename "$0" .sh)}"
@@ -27,8 +27,8 @@ wait_for_gpu() {
   done
 }
 
-cd "${PROJECT_ROOT}"
-export PYTHONPATH="${PROJECT_ROOT}:${PYTHONPATH:-}"
+cd "${ROOT}"
+export PYTHONPATH="${CODE_ROOT}:${ROOT}:${PYTHONPATH:-}"
 
 # Model-pred variant: FREDIS/IRNet/PALS-SARI source edits use classifier
 # probabilities, matching the signal used by the corresponding prior methods.

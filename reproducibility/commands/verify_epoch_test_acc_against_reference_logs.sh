@@ -19,8 +19,8 @@ FEATURE_EXTRACT_VIEW="${FEATURE_EXTRACT_VIEW:-weak_strong_fusion}"
 TARGET="${1:-main_c100_eta03}"
 
 MAIN_SCRIPT="${MAIN_SCRIPT:-${ROOT}/reproducibility/code/main/main.py}"
-ABLATION_SCRIPT="${ABLATION_SCRIPT:-${ROOT}/reproducibility/code/component_ablation/NSE_ABLATION.py}"
-PSS_SCRIPT="${PSS_SCRIPT:-${ROOT}/reproducibility/code/persistent_state/NSE_persistent.py}"
+ABLATION_SCRIPT="${ABLATION_SCRIPT:-${ROOT}/reproducibility/code/component_ablation/srse_ablation.py}"
+PSS_SCRIPT="${PSS_SCRIPT:-${ROOT}/reproducibility/code/persistent_state/srse_persistent.py}"
 COMPARE_SCRIPT="${COMPARE_SCRIPT:-${ROOT}/reproducibility/code/utils/epoch_test_acc_compare.py}"
 
 export PYTHONPATH="${ROOT}/reproducibility/code:${ROOT}:${PYTHONPATH:-}"

@@ -7,8 +7,8 @@ wrappers, and absolute-path provenance manifests.
 
 ## Contents
 
-- `reproducibility/code/`: training, ablation, persistent-state proxy, and
-  baseline source code.
+- `reproducibility/code/`: SRSE training, ablation, persistent-state proxy,
+  data-loading, and shared utility source code.
 - `reproducibility/commands/reproduce_srse_paper_experiments.sh`:
   unified reproduction launcher with package-local defaults.
 - `reproducibility/code/data/*.py`: dataset loaders and candidate-label
@@ -57,5 +57,5 @@ log. The current SRSE warmup compatibility setting is
 - Dataset archives and extracted dataset folders.
 - `out_ultimate`, checkpoint directories, `.pt/.pth/.ckpt` files.
 - Raw `run.log`, `master_log.txt`, and launcher log files.
-- Machine-local c201/d437 launch wrappers with hard-coded absolute paths.
+- Machine-local launch wrappers with hard-coded absolute paths.
 - Python bytecode, `__pycache__`, and temporary cache directories.
