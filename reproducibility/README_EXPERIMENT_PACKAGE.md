@@ -9,7 +9,7 @@ wrappers, and absolute-path provenance manifests.
 
 - `reproducibility/code/`: training, ablation, persistent-state proxy, and
   baseline source code.
-- `reproducibility/commands/reproduce_srse_paper_experiments_20260616.sh`:
+- `reproducibility/commands/reproduce_srse_paper_experiments.sh`:
   unified reproduction launcher with package-local defaults.
 - `reproducibility/code/data/*.py`: dataset loaders and candidate-label
   construction helpers.
@@ -28,8 +28,8 @@ export DATA_ROOT=/path/to/cifar/root
 export CROWD_ROOT=/path/to/dcic/root
 export GPU_ID=0
 
-bash reproducibility/commands/reproduce_srse_paper_experiments_20260616.sh help
-bash reproducibility/commands/reproduce_srse_paper_experiments_20260616.sh main_c100_eta03
+bash reproducibility/commands/reproduce_srse_paper_experiments.sh help
+bash reproducibility/commands/reproduce_srse_paper_experiments.sh main_c100_eta03
 ```
 
 The unified launcher supports separate targets for the main CIFAR-100 run,
@@ -44,7 +44,8 @@ cap only the executed loop:
 MAX_RUN_EPOCHS=2 \
 MAX_W_MODEL=0.5 \
 FEATURE_EXTRACT_VIEW=weak_strong_fusion \
-bash reproducibility/commands/verify_epoch_test_acc_c201.sh main_c100_eta03
+REFERENCE_ROOT=/path/to/reference_logs \
+bash reproducibility/commands/verify_epoch_test_acc_against_reference_logs.sh main_c100_eta03
 ```
 
 This compares the first two `test_acc` records against an existing completed

@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-GPU_ID="${1:-0}"
+GPU_ID="${1:-1}"
 PY="${PY:-/home/c201/miniconda3/envs/torch_cuda128_whm/bin/python}"
 PROJECT_ROOT="${PROJECT_ROOT:-/home/c201/公共/whm/PALS-SOFT/自适应LSR草稿_v3ref_only_20260409}"
 HUB_ROOT="${HUB_ROOT:-/home/c201/公共/whm/PALS-SOFT/双视图单视图实验结果/experiments/nse_reproducibility}"
 SCRIPT="${SCRIPT:-${HUB_ROOT}/NSE_persistent.py}"
 DATA_ROOT="${DATA_ROOT:-${PROJECT_ROOT}/data}"
-OUT="${OUT:-/home/c201/公共/whm/PALS-SOFT/双视图单视图实验结果/results/nse_persistent_state_v2_20260521}"
+OUT="${OUT:-/home/c201/公共/whm/PALS-SOFT/双视图单视图实验结果/results/nse_persistent_state_v2}"
 LAUNCH_LOG_DIR="${OUT}/_launcher_logs"
 mkdir -p "${LAUNCH_LOG_DIR}"
-LAUNCH_LOG="${LAUNCH_LOG_DIR}/c201_gpu${GPU_ID}_$(date +%Y%m%d_%H%M%S).log"
+LAUNCH_NAME="${LAUNCH_NAME:-$(basename "$0" .sh)}"
+LAUNCH_LOG="${LAUNCH_LOG_DIR}/${LAUNCH_NAME}.log"
 
 wait_for_gpu() {
   local threshold="${GPU_WAIT_MEM_MB:-1500}"
@@ -80,27 +81,18 @@ run_exp() {
 
 wait_for_gpu
 
-run_exp "FREDIS_RefineDisamb" \
-  --source_update_mode fredis_move \
-  --source_update_scope all \
-  --fredis_top_non_candidate_only \
-  --fredis_refine_threshold 0.05 \
-  --fredis_refine_min_conf 0.85 \
-  --fredis_disamb_threshold 0.85 \
-  --fredis_disamb_max_conf 0.05 \
-  --fredis_min_disamb_over_refine 2.0
+run_exp "UPLLRS_ReliablePromotion" \
+  --source_update_mode none \
+  --source_update_scope none \
+  --persistent_promotion_mode hard \
+  --promotion_scope nse_estimated_noise_highconf \
+  --promotion_threshold 0.95 \
+  --promotion_source p2 \
+  --promotion_label_space non_candidate
 
-run_exp "IRNet_ScoreCorrection" \
-  --source_update_mode irnet_correct \
+run_exp "PiCOPlus_SoftTargetCarryover" \
+  --source_update_mode pico_soft_target \
   --source_update_scope all \
-  --irnet_tau_boundary 0.0 \
-  --irnet_min_non_candidate_conf 0.85
-
-run_exp "PALS_SARI_LabelAugment" \
-  --source_update_mode pals_augment \
-  --source_update_scope all_highconf \
-  --source_update_schedule linear \
-  --source_update_threshold_start 0.95 \
-  --source_update_threshold_end 0.85
+  --source_update_alpha 0.1
 
 echo "[launcher] completed v2 gpu${GPU_ID} suite" | tee -a "${LAUNCH_LOG}"

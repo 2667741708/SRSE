@@ -7,10 +7,11 @@ PROJECT_ROOT="${PROJECT_ROOT:-/home/c201/公共/whm/PALS-SOFT/自适应LSR草稿
 HUB_ROOT="${HUB_ROOT:-/home/c201/公共/whm/PALS-SOFT/双视图单视图实验结果/experiments/nse_reproducibility}"
 SCRIPT="${SCRIPT:-${HUB_ROOT}/NSE_persistent.py}"
 DATA_ROOT="${DATA_ROOT:-${PROJECT_ROOT}/data}"
-OUT="${OUT:-/home/c201/公共/whm/PALS-SOFT/双视图单视图实验结果/results/nse_persistent_state_modelpred_20260610}"
+OUT="${OUT:-/home/c201/公共/whm/PALS-SOFT/双视图单视图实验结果/results/nse_persistent_state_v2}"
 LAUNCH_LOG_DIR="${OUT}/_launcher_logs"
 mkdir -p "${LAUNCH_LOG_DIR}"
-LAUNCH_LOG="${LAUNCH_LOG_DIR}/c201_gpu${GPU_ID}_$(date +%Y%m%d_%H%M%S).log"
+LAUNCH_NAME="${LAUNCH_NAME:-$(basename "$0" .sh)}"
+LAUNCH_LOG="${LAUNCH_LOG_DIR}/${LAUNCH_NAME}.log"
 
 wait_for_gpu() {
   local threshold="${GPU_WAIT_MEM_MB:-1500}"
@@ -29,8 +30,6 @@ wait_for_gpu() {
 cd "${PROJECT_ROOT}"
 export PYTHONPATH="${PROJECT_ROOT}:${PYTHONPATH:-}"
 
-# Model-pred variant: FREDIS/IRNet/PALS-SARI source edits use classifier
-# probabilities, matching the signal used by the corresponding prior methods.
 BASE_ARGS=(
   --dataset CIFAR100
   --train_root "${DATA_ROOT}"
@@ -58,7 +57,7 @@ BASE_ARGS=(
   --cuda_dev "${GPU_ID}"
   --pr 0.05
   --nr 0.3
-  --source_update_evidence model
+  --source_update_evidence p2
 )
 
 is_done() {
@@ -82,7 +81,7 @@ run_exp() {
 
 wait_for_gpu
 
-run_exp "FREDIS_RefineDisamb_ModelPred" \
+run_exp "FREDIS_RefineDisamb" \
   --source_update_mode fredis_move \
   --source_update_scope all \
   --fredis_top_non_candidate_only \
@@ -92,17 +91,17 @@ run_exp "FREDIS_RefineDisamb_ModelPred" \
   --fredis_disamb_max_conf 0.05 \
   --fredis_min_disamb_over_refine 2.0
 
-run_exp "IRNet_ScoreCorrection_ModelPred" \
+run_exp "IRNet_ScoreCorrection" \
   --source_update_mode irnet_correct \
   --source_update_scope all \
   --irnet_tau_boundary 0.0 \
   --irnet_min_non_candidate_conf 0.85
 
-run_exp "PALS_SARI_LabelAugment_ModelPred" \
+run_exp "PALS_SARI_LabelAugment" \
   --source_update_mode pals_augment \
   --source_update_scope all_highconf \
   --source_update_schedule linear \
   --source_update_threshold_start 0.95 \
   --source_update_threshold_end 0.85
 
-echo "[launcher] completed model-pred source-update gpu${GPU_ID} suite" | tee -a "${LAUNCH_LOG}"
+echo "[launcher] completed v2 gpu${GPU_ID} suite" | tee -a "${LAUNCH_LOG}"

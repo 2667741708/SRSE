@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Run a short SRSE validation on c201 while preserving the full experiment
+# Run a short SRSE validation against reference logs while preserving the full experiment
 # horizon in --epochs. The training process stops after MAX_RUN_EPOCHS and the
 # first N test-accuracy records are compared against an existing completed log.
 
@@ -9,6 +9,7 @@ ROOT="${PROJECT_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 PY="${PY:-python}"
 DATA_ROOT="${DATA_ROOT:-${ROOT}/data}"
 OUT="${OUT:-${ROOT}/out_ultimate/epoch_test_acc_validation}"
+REFERENCE_ROOT="${REFERENCE_ROOT:-${ROOT}/reference_logs}"
 GPU_ID="${GPU_ID:-0}"
 SEED="${SEED:-1}"
 MAX_RUN_EPOCHS="${MAX_RUN_EPOCHS:-2}"
@@ -70,7 +71,7 @@ candidate_log=""
 case "${TARGET}" in
   main_c100_eta03)
     exp_name="epoch_check/main_c100_eta03"
-    default_reference="/home/c201/公共/whm/PALS-SOFT/双视图单视图实验结果/results/nse_single_seed_validation_20260523/main/CIFAR100_pr005_nr03_seed1/seed_${SEED}/run.log"
+    default_reference="${REFERENCE_ROOT}/main_c100_eta03/seed_${SEED}/run.log"
     reference_log="${reference_log:-${default_reference}}"
     run_py "${MAIN_SCRIPT}" \
       --dataset CIFAR100 \
@@ -83,7 +84,7 @@ case "${TARGET}" in
     ;;
   component_a0_c100_eta03)
     exp_name="epoch_check/component_a0_c100_eta03"
-    default_reference="/home/c201/公共/whm/PALS-SOFT/双视图单视图实验结果/results/nse_single_seed_validation_20260523/component/A0_full_seed1/seed_${SEED}/run.log"
+    default_reference="${REFERENCE_ROOT}/component_a0_c100_eta03/seed_${SEED}/run.log"
     reference_log="${reference_log:-${default_reference}}"
     run_py "${ABLATION_SCRIPT}" \
       --dataset CIFAR100 \
@@ -96,7 +97,7 @@ case "${TARGET}" in
     ;;
   pss_upllrs_c100_eta03)
     exp_name="epoch_check/pss_upllrs_c100_eta03"
-    default_reference="/home/c201/公共/whm/PALS-SOFT/双视图单视图实验结果/results/nse_single_seed_validation_20260523/pss/UPLLRS_V2_PSS_seed1/seed_${SEED}/run.log"
+    default_reference="${REFERENCE_ROOT}/pss_upllrs_c100_eta03/seed_${SEED}/run.log"
     reference_log="${reference_log:-${default_reference}}"
     run_py "${PSS_SCRIPT}" \
       --dataset CIFAR100 \
@@ -126,7 +127,7 @@ case "${TARGET}" in
   *)
     cat >&2 <<'USAGE'
 Usage:
-  bash verify_epoch_test_acc_c201.sh <target>
+  bash verify_epoch_test_acc_against_reference_logs.sh <target>
 
 Targets:
   main_c100_eta03
@@ -135,8 +136,9 @@ Targets:
   compare_only
 
 Environment:
-  PROJECT_ROOT, PY, DATA_ROOT, OUT, GPU_ID, SEED, MAX_RUN_EPOCHS, TOLERANCE,
-  MAX_W_MODEL, FEATURE_EXTRACT_VIEW, REFERENCE_LOG, CANDIDATE_LOG.
+  PROJECT_ROOT, PY, DATA_ROOT, OUT, REFERENCE_ROOT, GPU_ID, SEED,
+  MAX_RUN_EPOCHS, TOLERANCE, MAX_W_MODEL, FEATURE_EXTRACT_VIEW,
+  REFERENCE_LOG, CANDIDATE_LOG.
 USAGE
     exit 2
     ;;
