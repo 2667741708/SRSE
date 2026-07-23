@@ -15,13 +15,8 @@ def build_reliable_mixup_targets(rel_labels, knn_scores_batch, num_classes, args
     s_labels = F.one_hot(rel_labels.long(), num_classes).float()
     dataset_name = getattr(args, 'dataset', '')
 
-    # [MODIFIED - gitdiffer]
-    # <<<<<<< BASE: direct uniform smoothing from args.lsr
-    # s_labels = s_labels * (1 - args.lsr) + args.lsr / num_classes
-    # =======
-    # Crowd datasets keep the baseline zero-smoothing path, while CIFAR
-    # use a KNN-residual target that no longer requires a hand-tuned lsr value.
-    # >>>>>>> NEW: remove hard lsr dependence / 删除对硬编码 lsr 的依赖
+    # Crowd datasets keep the one-hot target, while CIFAR uses a
+    # KNN-residual target when neighborhood scores are available.
     if dataset_name in {'Benthic', 'Treeversity', 'Plankton'}:
         target_labels = s_labels
         strategy = 'crowd_zero_smoothing'
@@ -33,9 +28,8 @@ def build_reliable_mixup_targets(rel_labels, knn_scores_batch, num_classes, args
         target_labels = (1.0 - alpha) * s_labels + alpha * knn_dist
         strategy = f'knn_residual_auto(mean_alpha={alpha.mean().item():.4f})'
     else:
-        legacy_lsr = float(getattr(args, 'lsr', 0.0))
-        target_labels = s_labels * (1.0 - legacy_lsr) + legacy_lsr / num_classes
-        strategy = f'legacy_lsr_fallback({legacy_lsr:.4f})'
+        target_labels = s_labels
+        strategy = 'one_hot_fallback'
 
     if logger is not None and log_once:
         logger.info(f"  [Target Builder] dataset={dataset_name} strategy={strategy}")
