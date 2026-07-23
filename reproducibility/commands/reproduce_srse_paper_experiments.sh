@@ -124,7 +124,6 @@ common_cifar_args=(
   --momentum 0.9
   --lr_scheduler cosine
   --mixup_alpha 1.0
-  --lsr 0.0
   --ema_alpha 0.999
   --k_val 15
   --delta 0.25
@@ -216,7 +215,6 @@ run_pss_row() {
     --momentum 0.9 \
     --lr_scheduler cosine \
     --mixup_alpha 1.0 \
-    --lsr 0.0 \
     --k_val 15 \
     --delta 0.25 \
     --history_len 15 \
@@ -340,7 +338,6 @@ run_crowd_srse() {
     --lr_decay_epochs 60 80 \
     --lr_decay_rate 0.2 \
     --mixup_alpha 1.0 \
-    --lsr 0.0 \
     --ema_alpha 0.999 \
     --k_val 5 \
     --delta 1.0 \
