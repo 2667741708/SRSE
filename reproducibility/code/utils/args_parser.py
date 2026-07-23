@@ -96,7 +96,6 @@ def parse_args():
                         help='Decay rate (gamma) for the step learning rate scheduler.')
     # 损失函数超参数
     parser.add_argument('--mixup_alpha', type=float, default=1.0, help='Alpha for Mixup.')
-    parser.add_argument('--lsr', type=float, default=0.5, help='[Compatibility only] Legacy label smoothing rate.')
     parser.add_argument('--consistency_weight', type=float, default=1.0, help='Weight for consistency loss.')
 
     # --- 🚀 消融实验开关 (Ablation Study Flags) ---
