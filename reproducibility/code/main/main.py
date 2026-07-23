@@ -291,7 +291,6 @@ def parse_args():
                         help='Decay rate (gamma) for the step learning rate scheduler.')    
     # 损失函数超参数
     parser.add_argument('--mixup_alpha', type=float, default=1.0, help='Alpha for Mixup.')
-    parser.add_argument('--lsr', type=float, default=0.5, help='Label smoothing rate.')
     parser.add_argument('--consistency_weight', type=float, default=1.0, help='Weight for consistency loss.')
     parser.add_argument('--feature_extract_view', type=str, default='weak_strong_fusion',
                         choices=['weak_only', 'weak_strong_fusion'],
@@ -1545,7 +1544,6 @@ def train_unified_single_stream(args, encoder, classifier, device,
                 proto_manager.update(rel_feats_curr, batch_rel_mask, rel_labels)
 
         s_labels = F.one_hot(rel_labels.long(), num_classes).float()
-        s_labels = s_labels * (1 - args.lsr) + args.lsr / num_classes
 
         B_s = rel_weak.size(0)
         if reliable_mixup_enabled:
