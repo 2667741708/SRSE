@@ -41,7 +41,6 @@ BASE_ARGS=(
   --momentum 0.9
   --lr_scheduler cosine
   --mixup_alpha 1.0
-  --lsr 0.0
   --k_val 15
   --delta 0.25
   --history_len 15

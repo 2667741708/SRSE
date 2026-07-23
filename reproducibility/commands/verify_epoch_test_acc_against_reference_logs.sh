@@ -47,7 +47,6 @@ common_cifar_args=(
   --momentum 0.9
   --lr_scheduler cosine
   --mixup_alpha 1.0
-  --lsr 0.0
   --ema_alpha 0.999
   --k_val 15
   --delta 0.25
